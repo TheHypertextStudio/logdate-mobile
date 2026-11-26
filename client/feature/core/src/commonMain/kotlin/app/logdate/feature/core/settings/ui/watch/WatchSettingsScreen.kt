@@ -58,6 +58,8 @@ fun WatchSettingsScreen(
     val status by viewModel.status.collectAsStateWithLifecycle()
     val requestFailure by viewModel.requestFailure.collectAsStateWithLifecycle()
     val installRequestSent by viewModel.installRequestSent.collectAsStateWithLifecycle()
+    val sendingRequest by viewModel.sendingRequest.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     val phonePlayStoreLauncher = rememberPhonePlayStoreLauncher()
 
     LifecycleResumeEffect(viewModel) {
@@ -90,6 +92,10 @@ fun WatchSettingsScreen(
             onUpdateOnPhone = { phonePlayStoreLauncher?.invoke() },
             onClearRequestFailure = viewModel::clearRequestFailure,
             onClearInstallRequestSent = viewModel::clearInstallRequestSent,
+            onRequestSync = viewModel::requestSync,
+            refreshing = refreshing,
+            onRefresh = viewModel::refresh,
+            sendingRequest = sendingRequest,
         )
         return
     }

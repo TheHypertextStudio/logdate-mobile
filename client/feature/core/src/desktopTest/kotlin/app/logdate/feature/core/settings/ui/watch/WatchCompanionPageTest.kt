@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
 import app.logdate.feature.core.settings.ui.watch.DiscoveredWatch
+import app.logdate.feature.core.settings.ui.watch.WatchIssue
 import app.logdate.feature.core.settings.ui.watch.WatchLinkLine
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.WatchSetupStep
@@ -675,6 +676,83 @@ class WatchCompanionPageTest {
             saveScreenshot(onRoot().captureToImage(), "watch-setup-update-phone.png")
             onNodeWithText("Update on phone").performClick()
             assertEquals(1, updatePhoneClicks)
+        }
+
+    @Test
+    fun `ready card exposes sync action for pending moments and header refresh runs`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            var syncClicks = 0
+            var refreshClicks = 0
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status =
+                            WatchStatus.Ready(
+                                watchName = "Pixel Watch 5",
+                                nearby = true,
+                                sync = WatchSyncLine(waiting = 3),
+                            ),
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        onRequestSync = { syncClicks++ },
+                        onRefresh = { refreshClicks++ },
+                    )
+                }
+            }
+
+            onNodeWithText("Sync Now").performClick()
+            onNodeWithContentDescription("Check again").performClick()
+            assertEquals(1, syncClicks)
+            assertEquals(1, refreshClicks)
+        }
+
+    @Test
+    fun `needs attention setup-again offers action buttons and busy setup avoids premature sent step`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            var associateClicks = 0
+            var sending by mutableStateOf(false)
+            var status by mutableStateOf<WatchStatus>(
+                WatchStatus.NeedsAttention(watchName = "Pixel Watch 5", nearby = true, issue = WatchIssue.SetUpAgain),
+            )
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = status,
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = { associateClicks++ },
+                        onInstall = { sending = true },
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        sendingRequest = sending,
+                    )
+                }
+            }
+
+            onNodeWithText("Set up again").performClick()
+            assertEquals(1, associateClicks)
+
+            status = WatchStatus.NotInstalled("Pixel Watch 5")
+            waitForIdle()
+            onNodeWithText("Install on watch").performClick()
+            waitForIdle()
+            onNodeWithText("Install LogDate on Pixel Watch 5").assertExists()
+
+            sending = false
+            waitForIdle()
+            onNodeWithText("Finish installing on Pixel Watch 5").assertExists()
         }
 
     private fun saveScreenshot(

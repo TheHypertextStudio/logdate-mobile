@@ -40,6 +40,7 @@ class AndroidWatchRemovalAccess(
     private val links: PhoneWatchLinkStore,
     private val sessions: SessionStorage,
     private val associations: app.logdate.client.watch.WatchAssociationBindings,
+    private val onRemoved: suspend (String) -> Unit = {},
 ) : WatchRemovalAccess {
     private val coordinator =
         WatchRemovalCoordinator(
@@ -104,7 +105,11 @@ class AndroidWatchRemovalAccess(
 
     override suspend fun remove(target: WatchRemovalTarget): WatchRemovalResult =
         try {
-            coordinator.remove(target)
+            coordinator.remove(target).also { result ->
+                if (result is WatchRemovalResult.Removed || result is WatchRemovalResult.RemovedWillWipeOnNextConnect) {
+                    onRemoved(target.context.watchNode)
+                }
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {

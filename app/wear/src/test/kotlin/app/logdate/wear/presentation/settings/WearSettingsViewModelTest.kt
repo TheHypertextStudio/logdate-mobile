@@ -70,13 +70,14 @@ class WearSettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): WearSettingsViewModel =
+    private fun createViewModel(appVersion: String? = null): WearSettingsViewModel =
         WearSettingsViewModel(
             syncManager,
             PhoneReachability { phone },
             locationSettingsRepository,
             permissionManager,
             locationTrackingManager,
+            appVersion,
         )
 
     @Test
@@ -235,5 +236,13 @@ class WearSettingsViewModelTest {
 
             coVerify(exactly = 0) { syncManager.getSyncStatus() }
             coVerify(exactly = 0) { locationSettingsRepository.getSettings() }
+        }
+
+    @Test
+    fun `app version is surfaced in ui state`() =
+        runTest {
+            createViewModel(appVersion = "0.2.0").uiState.test {
+                assertEquals("0.2.0", expectMostRecentItem().appVersion)
+            }
         }
 }

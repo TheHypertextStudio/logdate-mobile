@@ -24,6 +24,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -102,7 +103,11 @@ class AndroidWatchConnectionManager(
     },
     private val probeWatchInfo: (suspend (String) -> WatchPingProbe)? = null,
 ) : WatchConnectionManager {
-    private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val transportSnapshots =
+        MutableSharedFlow<WatchTransportSnapshot>(
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     private val selectedNodeId = MutableStateFlow<String?>(null)
     private val snapshots = Mutex()
     private val knownAppNodes = ConcurrentHashMap<String, WatchNodeSnapshot>()
@@ -113,11 +118,18 @@ class AndroidWatchConnectionManager(
 
     override fun selectWatch(nodeId: String) {
         selectedNodeId.value = nodeId
-        refreshes.tryEmit(Unit)
     }
 
     override suspend fun refresh() {
-        refreshes.emit(Unit)
+        resolveTransportSnapshot()
+    }
+
+    override suspend fun onWatchRemoved(nodeId: String) {
+        evictNode(nodeId)
+        if (selectedNodeId.value == nodeId) {
+            selectedNodeId.value = null
+        }
+        refresh()
     }
 
     override fun observeConnectionState(): Flow<WatchConnectionState> =
@@ -368,7 +380,7 @@ class AndroidWatchConnectionManager(
                         delay(3_000)
                     }
                 }
-            val requested = launch { refreshes.collect { emitSnapshot() } }
+            val requested = launch { transportSnapshots.collect { trySend(it) } }
 
             awaitClose {
                 polling.cancel()
@@ -381,68 +393,79 @@ class AndroidWatchConnectionManager(
     /** Captures the current set of connected nodes and installed LogDate watch nodes. */
     private suspend fun resolveTransportSnapshot(): WatchTransportSnapshot =
         snapshots.withLock {
-            withTimeoutOrNull(5_000) {
-                try {
-                    val connectedNodes =
-                        nodeClient.connectedNodes.await().map { node ->
-                            WatchNodeSnapshot(
-                                id = node.id,
-                                displayName = node.displayName,
-                                isNearby = node.isNearby,
-                            )
-                        }
-                    val appNodes =
-                        capabilityClient
-                            .getCapability(WatchNodeSelector.WATCH_CAPABILITY, CapabilityClient.FILTER_ALL)
-                            .await()
-                            .nodes
-                            .map { node ->
+            val snapshot =
+                withTimeoutOrNull(5_000) {
+                    try {
+                        val connectedNodes =
+                            nodeClient.connectedNodes.await().map { node ->
                                 WatchNodeSnapshot(
                                     id = node.id,
                                     displayName = node.displayName,
                                     isNearby = node.isNearby,
                                 )
                             }
+                        val appNodes =
+                            capabilityClient
+                                .getCapability(WatchNodeSelector.WATCH_CAPABILITY, CapabilityClient.FILTER_ALL)
+                                .await()
+                                .nodes
+                                .map { node ->
+                                    WatchNodeSnapshot(
+                                        id = node.id,
+                                        displayName = node.displayName,
+                                        isNearby = node.isNearby,
+                                    )
+                                }
 
-                    val advertisedIds = appNodes.mapTo(mutableSetOf()) { it.id }
-                    val probedNodes = mutableListOf<WatchNodeSnapshot>()
-                    connectedNodes.forEach { node ->
-                        val hasCapability = node.id in advertisedIds
-                        val existingProbe = peerPings.value[node.id]
-                        // Probe nodes missing capability (fallback detection) and connected capability nodes without cached version info.
-                        if (!hasCapability || existingProbe == null || existingProbe is WatchPingProbe.Unreachable) {
-                            val probe = probeNode(node.id)
-                            if (probe.isInstalled()) {
-                                peerPings.update { it + (node.id to probe) }
-                                if (!hasCapability) probedNodes += node
-                            } else if (!hasCapability) {
-                                evictNode(node.id)
-                            }
-                        }
+                        val detectedAppNodes = probeAndTrackAppNodes(connectedNodes, advertisedNodes = appNodes)
+                        WatchTransportSnapshot(
+                            connectedNodes = connectedNodes,
+                            appNodes = detectedAppNodes,
+                            knownAppNodes = knownAppNodes.values.toList(),
+                        )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Napier.e(e) { "Failed to resolve watch transport state" }
+                        WatchTransportSnapshot(available = false)
                     }
-                    val detectedAppNodes = (appNodes + probedNodes).distinctBy { it.id }
-                    val detectedIds = detectedAppNodes.mapTo(mutableSetOf()) { it.id }
-                    detectedAppNodes.forEach { knownAppNodes[it.id] = it }
-                    // Evict connected nodes that stopped reporting LogDate (e.g. after uninstall), while keeping
-                    // out-of-range node metadata intact until that watch reconnects.
-                    connectedNodes.forEach { node ->
-                        if (node.id !in detectedIds) {
-                            evictNode(node.id)
-                        }
-                    }
-                    WatchTransportSnapshot(
-                        connectedNodes = connectedNodes,
-                        appNodes = detectedAppNodes,
-                        knownAppNodes = knownAppNodes.values.toList(),
-                    )
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Napier.e(e) { "Failed to resolve watch transport state" }
-                    WatchTransportSnapshot(available = false)
-                }
-            } ?: WatchTransportSnapshot(available = false)
+                } ?: WatchTransportSnapshot(available = false)
+            transportSnapshots.tryEmit(snapshot)
+            snapshot
         }
+
+    private suspend fun probeAndTrackAppNodes(
+        connectedNodes: List<WatchNodeSnapshot>,
+        advertisedNodes: List<WatchNodeSnapshot>,
+    ): List<WatchNodeSnapshot> {
+        val advertisedIds = advertisedNodes.mapTo(mutableSetOf()) { it.id }
+        val probedNodes = mutableListOf<WatchNodeSnapshot>()
+        connectedNodes.forEach { node ->
+            val hasCapability = node.id in advertisedIds
+            val existingProbe = peerPings.value[node.id]
+            // Probe nodes missing capability (fallback detection) and connected capability nodes without cached version info.
+            if (!hasCapability || existingProbe == null || existingProbe is WatchPingProbe.Unreachable) {
+                val probe = probeNode(node.id)
+                if (probe.isInstalled()) {
+                    peerPings.update { it + (node.id to probe) }
+                    if (!hasCapability) probedNodes += node
+                } else if (!hasCapability) {
+                    evictNode(node.id)
+                }
+            }
+        }
+        val detectedAppNodes = (advertisedNodes + probedNodes).distinctBy { it.id }
+        val detectedIds = detectedAppNodes.mapTo(mutableSetOf()) { it.id }
+        detectedAppNodes.forEach { knownAppNodes[it.id] = it }
+        // Evict connected nodes that stopped reporting LogDate (e.g. after uninstall), while keeping
+        // out-of-range node metadata intact until that watch reconnects.
+        connectedNodes.forEach { node ->
+            if (node.id !in detectedIds) {
+                evictNode(node.id)
+            }
+        }
+        return detectedAppNodes
+    }
 
     private suspend fun probeNode(nodeId: String): WatchPingProbe =
         if (probeWatchInfo != null) {

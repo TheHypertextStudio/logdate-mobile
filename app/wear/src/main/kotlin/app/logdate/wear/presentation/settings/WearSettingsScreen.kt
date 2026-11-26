@@ -1,6 +1,8 @@
 package app.logdate.wear.presentation.settings
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
@@ -129,25 +133,28 @@ internal fun WearSettingsContent(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     }
 
-                Button(
+                Card(
                     onClick = {},
-                    enabled = false,
                     modifier = Modifier.fillMaxWidth(),
-                    icon = {
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
                             tint = color,
                             modifier = Modifier.size(20.dp),
                         )
-                    },
-                    label = {
                         Text(
                             text = label,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = color,
                         )
-                    },
-                )
+                    }
+                }
             }
 
             item(key = "last_sync") {
@@ -319,6 +326,21 @@ internal fun WearSettingsContent(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
+            }
+
+            settingsState.appVersion?.takeIf { it.isNotBlank() }?.let { version ->
+                item(key = "app_version") {
+                    Text(
+                        text = stringResource(R.string.wear_settings_version, version),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp, bottom = 8.dp),
+                    )
+                }
             }
         }
     }

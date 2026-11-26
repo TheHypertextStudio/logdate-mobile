@@ -3,6 +3,12 @@
 
 package app.logdate.feature.core.settings.ui.watch.v2
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.HourglassEmpty
 import androidx.compose.material.icons.rounded.PriorityHigh
@@ -44,7 +49,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
@@ -52,6 +60,7 @@ import app.logdate.feature.core.settings.ui.watch.messageResource
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsScaffold
+import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepSecondaryButton
 import app.logdate.ui.theme.Spacing
@@ -141,6 +150,16 @@ fun WatchDiagnosticsContent(
     onFix: (WatchDiagnosticFix) -> Unit,
     onBack: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
+    val reduceMotion by rememberSystemReduceMotion()
+    val checkWithHaptic = {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onCheck()
+    }
+    val fixWithHaptic: (WatchDiagnosticFix) -> Unit = { fix ->
+        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+        onFix(fix)
+    }
     when (val current = state) {
         WatchDiagnosticsState.Checking -> {
             WatchFlowScaffold(
@@ -238,7 +257,7 @@ fun WatchDiagnosticsContent(
                                 strokeWidth = 2.dp,
                             )
                         } else {
-                            IconButton(onClick = onCheck) {
+                            IconButton(onClick = checkWithHaptic) {
                                 Icon(
                                     imageVector = Icons.Rounded.Refresh,
                                     contentDescription = stringResource(Res.string.watch_v2_check_again),
@@ -256,16 +275,22 @@ fun WatchDiagnosticsContent(
                             )
                         }
                     }
-                    current.feedback?.let { feedback ->
-                        item {
-                            DiagnosticFeedbackBanner(feedback)
+                    item {
+                        AnimatedVisibility(
+                            visible = current.feedback != null,
+                            enter = if (reduceMotion) fadeIn() else fadeIn() + expandVertically(),
+                            exit = if (reduceMotion) fadeOut() else fadeOut() + shrinkVertically(),
+                        ) {
+                            current.feedback?.let { feedback ->
+                                DiagnosticFeedbackBanner(feedback)
+                            }
                         }
                     }
                     if (actionSteps.isNotEmpty()) {
                         item {
                             MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                                 actionSteps.forEach { step ->
-                                    WatchDiagnosticRow(step = step, busy = busy, onFix = onFix)
+                                    WatchDiagnosticRow(step = step, busy = busy, onFix = fixWithHaptic)
                                 }
                             }
                         }
@@ -274,13 +299,17 @@ fun WatchDiagnosticsContent(
                         item {
                             MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                                 waitingSteps.forEach { step ->
-                                    WatchDiagnosticRow(step = step, busy = busy, onFix = onFix)
+                                    WatchDiagnosticRow(step = step, busy = busy, onFix = fixWithHaptic)
                                 }
                             }
                         }
                     }
                     if (passedSteps.isNotEmpty()) {
                         item {
+                            val chevronRotation by animateFloatAsState(
+                                targetValue = if (showPassed) 180f else 0f,
+                                label = "diagnostics_passed_chevron",
+                            )
                             MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                                 SettingsRow(
                                     leadingContent = {
@@ -301,18 +330,26 @@ fun WatchDiagnosticsContent(
                                     },
                                     trailingContent = {
                                         Icon(
-                                            imageVector = if (showPassed) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                                            imageVector = Icons.Rounded.ExpandMore,
                                             contentDescription = null,
+                                            modifier = Modifier.rotate(chevronRotation),
                                         )
                                     },
                                     modifier =
                                         Modifier.clickable(role = Role.Button) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             showPassed = !showPassed
                                         },
                                 )
-                                if (showPassed) {
-                                    passedSteps.forEach { step ->
-                                        WatchDiagnosticRow(step = step, busy = busy, onFix = onFix)
+                                AnimatedVisibility(
+                                    visible = showPassed,
+                                    enter = if (reduceMotion) fadeIn() else fadeIn() + expandVertically(),
+                                    exit = if (reduceMotion) fadeOut() else fadeOut() + shrinkVertically(),
+                                ) {
+                                    Column {
+                                        passedSteps.forEach { step ->
+                                            WatchDiagnosticRow(step = step, busy = busy, onFix = fixWithHaptic)
+                                        }
                                     }
                                 }
                             }

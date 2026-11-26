@@ -23,15 +23,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.sync.peer.removal.WatchRemovalAccess
 import app.logdate.client.sync.peer.removal.WatchRemovalResult
 import app.logdate.client.sync.peer.removal.WatchRemovalTarget
+import app.logdate.ui.common.PlatformBackHandler
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepSecondaryButton
@@ -130,6 +134,20 @@ fun WatchRemovalContent(
     onBack: () -> Unit,
 ) {
     val reduceMotion by rememberSystemReduceMotion()
+    val haptic = LocalHapticFeedback.current
+    // Prevent backing out mid-revocation/wipe so phone and watch state never diverge halfway through removal.
+    PlatformBackHandler(enabled = state is WatchRemovalState.Removing) {}
+    LaunchedEffect(state) {
+        if (state is WatchRemovalState.Finished) {
+            val feedback =
+                if (state.result is WatchRemovalResult.Failed) {
+                    HapticFeedbackType.LongPress
+                } else {
+                    HapticFeedbackType.Confirm
+                }
+            haptic.performHapticFeedback(feedback)
+        }
+    }
     AnimatedContent(
         targetState = state,
         modifier = Modifier.fillMaxSize(),
@@ -177,7 +195,10 @@ fun WatchRemovalContent(
                 ) {
                     val height = ButtonDefaults.MediumContainerHeight
                     Button(
-                        onClick = onRemove,
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onRemove()
+                        },
                         shapes = ButtonDefaults.shapesFor(height),
                         modifier = Modifier.fillMaxWidth().heightIn(min = height),
                         contentPadding = ButtonDefaults.contentPaddingFor(height),

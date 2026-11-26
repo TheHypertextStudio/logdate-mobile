@@ -2,13 +2,17 @@
 
 package app.logdate.feature.core.settings.ui.watch.v2
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,11 +20,16 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Troubleshoot
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,8 +39,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,7 +65,10 @@ import logdate.client.feature.core.generated.resources.watch_link_through_phone
 import logdate.client.feature.core.generated.resources.watch_notifications
 import logdate.client.feature.core.generated.resources.watch_out_of_range
 import logdate.client.feature.core.generated.resources.watch_settings
+import logdate.client.feature.core.generated.resources.watch_sync_now
+import logdate.client.feature.core.generated.resources.watch_sync_pending
 import logdate.client.feature.core.generated.resources.watch_v2_access_section
+import logdate.client.feature.core.generated.resources.watch_v2_check_again
 import logdate.client.feature.core.generated.resources.watch_v2_connection_section
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_description
@@ -98,6 +113,10 @@ fun WatchCompanionPage(
     onUpdateOnPhone: (() -> Unit)? = null,
     onClearRequestFailure: () -> Unit = {},
     onClearInstallRequestSent: () -> Unit = {},
+    onRequestSync: (() -> Unit)? = null,
+    refreshing: Boolean = false,
+    onRefresh: (() -> Unit)? = null,
+    sendingRequest: Boolean = false,
     preferences: (@Composable (captureActions: @Composable () -> Unit) -> Unit)? = null,
 ) {
     val updateRequired =
@@ -139,18 +158,21 @@ fun WatchCompanionPage(
             onUpdateOnPhone = onUpdateOnPhone,
             onClearRequestFailure = onClearRequestFailure,
             onClearInstallRequestSent = onClearInstallRequestSent,
+            sendingRequest = sendingRequest,
         )
         return
     }
+    val haptic = LocalHapticFeedback.current
     val identity: @Composable () -> Unit = {
         if (status is WatchStatus.Ready) {
-            WatchReadyIdentity(status)
+            WatchReadyIdentity(status, onRequestSync)
         } else {
             WatchStatusCard(
                 status,
                 requestFailure,
                 onAssociate,
                 onInstall,
+                onRequestSync = onRequestSync,
                 onRetry = onRetry,
                 onConfirmMissing = onConfirmMissing,
                 onOpenOnWatch = onOpenOnWatch,
@@ -254,6 +276,28 @@ fun WatchCompanionPage(
         onBack = onBack,
         modifier = modifier,
         maxContentWidth = 1040.dp,
+        actions = {
+            if (onRefresh != null) {
+                if (refreshing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = Spacing.md).size(20.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onRefresh()
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Refresh,
+                            contentDescription = stringResource(Res.string.watch_v2_check_again),
+                        )
+                    }
+                }
+            }
+        },
     ) {
         item {
             BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = Spacing.lg)) {
@@ -286,7 +330,10 @@ fun WatchCompanionPage(
 }
 
 @Composable
-private fun WatchReadyIdentity(status: WatchStatus.Ready) {
+private fun WatchReadyIdentity(
+    status: WatchStatus.Ready,
+    onRequestSync: (() -> Unit)? = null,
+) {
     val largeText = LocalDensity.current.fontScale >= 1.6f
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -299,11 +346,11 @@ private fun WatchReadyIdentity(status: WatchStatus.Ready) {
         ) {
             if (largeText) {
                 WatchIdentityIcon()
-                WatchIdentityCopy(status)
+                WatchIdentityCopy(status, onRequestSync = onRequestSync)
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
                     WatchIdentityIcon()
-                    WatchIdentityCopy(status, Modifier.weight(1f))
+                    WatchIdentityCopy(status, Modifier.weight(1f), onRequestSync = onRequestSync)
                 }
             }
         }
@@ -330,13 +377,28 @@ private fun WatchIdentityIcon() {
 private fun WatchIdentityCopy(
     status: WatchStatus.Ready,
     modifier: Modifier = Modifier,
+    onRequestSync: (() -> Unit)? = null,
 ) {
+    val haptic = LocalHapticFeedback.current
+    val dotColor =
+        if (status.nearby) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSecondaryContainer
+                .copy(alpha = 0.5f)
+        }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        Text(
-            stringResource(if (status.nearby) Res.string.watch_connected else Res.string.watch_out_of_range),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(8.dp).background(dotColor, CircleShape))
+            Text(
+                stringResource(if (status.nearby) Res.string.watch_connected else Res.string.watch_out_of_range),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
         Text(
             status.watchName.replace('_', ' '),
             style = MaterialTheme.typography.bodyMedium,
@@ -363,6 +425,29 @@ private fun WatchIdentityCopy(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
             )
+        }
+        val waiting = status.sync?.waiting ?: 0
+        if (waiting > 0) {
+            Text(
+                stringResource(Res.string.watch_sync_pending, waiting),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            if (status.nearby && onRequestSync != null) {
+                FilledTonalButton(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onRequestSync()
+                    },
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                ) {
+                    Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Text(
+                        stringResource(Res.string.watch_sync_now),
+                        modifier = Modifier.padding(start = Spacing.xs),
+                    )
+                }
+            }
         }
     }
 }
