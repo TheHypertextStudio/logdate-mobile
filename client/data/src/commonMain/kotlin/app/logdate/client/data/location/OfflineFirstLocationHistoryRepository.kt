@@ -59,6 +59,17 @@ class OfflineFirstLocationHistoryRepository(
             .getPage(userId, deviceId, afterLoggedAt, afterSampleId, limit.coerceIn(1, 1000))
             .map { it.toDomainModel() }
 
+    override suspend fun getLocationHistoryPageBySequence(
+        userId: String,
+        deviceId: String,
+        afterSequence: Long,
+        afterSampleId: String,
+        limit: Int,
+    ): List<LocationHistoryItem> =
+        locationHistoryDao
+            .getPageBySequence(userId, deviceId, afterSequence, afterSampleId, limit.coerceIn(1, 1000))
+            .map { it.toDomainModel() }
+
     override suspend fun getLocationHistoryBefore(
         userId: String,
         deviceId: String,
@@ -112,10 +123,10 @@ class OfflineFirstLocationHistoryRepository(
         )
 
     override suspend fun logLocation(record: LocationLogRecord): Result<Unit> =
-        runCatchingUnlessCancelled { locationHistoryDao.addLocationLog(record.toEntity()) }
+        runCatchingUnlessCancelled { locationHistoryDao.addLocationLogWithSequence(record.toEntity()) }
 
     override suspend fun logLocations(records: List<LocationLogRecord>): Result<Unit> =
-        runCatchingUnlessCancelled { locationHistoryDao.addLocationLogs(records.map { it.toEntity() }) }
+        runCatchingUnlessCancelled { locationHistoryDao.addLocationLogsWithSequence(records.map { it.toEntity() }) }
 
     private fun LocationLogRecord.toEntity() =
         LocationLogEntity(
@@ -140,6 +151,10 @@ class OfflineFirstLocationHistoryRepository(
             isMock = isMock,
             activityType = activityType,
             timeZoneId = timeZoneId,
+            provider = provider,
+            speedAccuracyMetersPerSecond = speedAccuracyMetersPerSecond,
+            verticalAccuracyMeters = verticalAccuracyMeters,
+            elapsedRealtimeNanos = elapsedRealtimeNanos,
         )
 
     override suspend fun restoreLocationForArchive(
@@ -204,6 +219,11 @@ class OfflineFirstLocationHistoryRepository(
             isMock = isMock,
             activityType = activityType,
             timeZoneId = timeZoneId,
+            provider = provider,
+            speedAccuracyMetersPerSecond = speedAccuracyMetersPerSecond,
+            verticalAccuracyMeters = verticalAccuracyMeters,
+            elapsedRealtimeNanos = elapsedRealtimeNanos,
+            ingestionSeq = ingestionSeq,
         )
 
     private fun String.toCapturePipeline(): LocationCapturePipeline =

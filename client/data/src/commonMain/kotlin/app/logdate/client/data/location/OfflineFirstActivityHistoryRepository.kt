@@ -52,6 +52,41 @@ class OfflineFirstActivityHistoryRepository(
             )
         }
 
+    override suspend fun latestBefore(
+        userId: String,
+        deviceId: String,
+        before: Instant,
+    ): ActivityHistoryItem? =
+        dao.latestBefore(userId, deviceId, before)?.let { row ->
+            ActivityHistoryItem(
+                row.id,
+                row.userId,
+                row.deviceId,
+                row.timestamp,
+                row.recordedAt,
+                row.activityType,
+                row.transitionType,
+                row.timeZoneId,
+            )
+        }
+
+    override suspend fun latestForDevice(
+        deviceId: String,
+        since: Instant,
+    ): ActivityHistoryItem? =
+        dao.latestForDevice(deviceId, since)?.let { row ->
+            ActivityHistoryItem(
+                row.id,
+                row.userId,
+                row.deviceId,
+                row.timestamp,
+                row.recordedAt,
+                row.activityType,
+                row.transitionType,
+                row.timeZoneId,
+            )
+        }
+
     override suspend fun recordActivity(item: ActivityHistoryItem): Result<Unit> =
         try {
             dao.insert(

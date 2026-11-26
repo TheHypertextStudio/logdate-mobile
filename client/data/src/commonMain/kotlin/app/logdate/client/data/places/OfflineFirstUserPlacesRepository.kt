@@ -120,6 +120,7 @@ class OfflineFirstUserPlacesRepository(
             lng = longitude,
             radiusMeters = radiusMeters,
             description = description,
+            category = category,
         )
 
     private fun Place.UserDefined.toEntity(existingCreatedAt: Long? = null): UserPlaceEntity {
@@ -133,6 +134,7 @@ class OfflineFirstUserPlacesRepository(
             description = description,
             createdAt = existingCreatedAt ?: now,
             updatedAt = now,
+            category = category,
         )
     }
 

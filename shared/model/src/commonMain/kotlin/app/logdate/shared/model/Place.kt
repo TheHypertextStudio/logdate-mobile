@@ -21,5 +21,6 @@ sealed class Place(
         val lng: Double,
         val radiusMeters: Double = 100.0,
         val description: String? = null,
+        val category: String? = null,
     ) : Place(id, displayName, lat, lng)
 }

@@ -29,6 +29,17 @@ interface ActivityHistoryRepository {
         limit: Int = 500,
     ): List<ActivityHistoryItem> = emptyList()
 
+    suspend fun latestBefore(
+        userId: String,
+        deviceId: String,
+        before: Instant,
+    ): ActivityHistoryItem? = null
+
+    suspend fun latestForDevice(
+        deviceId: String,
+        since: Instant,
+    ): ActivityHistoryItem? = null
+
     suspend fun recordActivity(item: ActivityHistoryItem): Result<Unit>
 
     suspend fun deleteActivityHistoryBetween(

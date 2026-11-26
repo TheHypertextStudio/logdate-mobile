@@ -32,6 +32,25 @@ interface LocationActivityDao {
         limit: Int,
     ): List<LocationActivityEntity>
 
+    @Query(
+        "SELECT * FROM location_activity WHERE user_id = :userId AND device_id = :deviceId " +
+            "AND timestamp < :before ORDER BY timestamp DESC, id DESC LIMIT 1",
+    )
+    suspend fun latestBefore(
+        userId: String,
+        deviceId: String,
+        before: Instant,
+    ): LocationActivityEntity?
+
+    @Query(
+        "SELECT * FROM location_activity WHERE device_id = :deviceId " +
+            "AND timestamp >= :since ORDER BY timestamp DESC, recorded_at DESC LIMIT 1",
+    )
+    suspend fun latestForDevice(
+        deviceId: String,
+        since: Instant,
+    ): LocationActivityEntity?
+
     @Query("DELETE FROM location_activity WHERE timestamp >= :startTime AND timestamp < :endTime")
     suspend fun deleteBetween(
         startTime: Instant,

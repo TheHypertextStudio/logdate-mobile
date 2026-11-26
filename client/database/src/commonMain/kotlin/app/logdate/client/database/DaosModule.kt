@@ -48,4 +48,5 @@ val daosModule: Module =
         single { get<LogDateDatabase>().inferredPersonEvidenceDao() }
         single { get<LogDateDatabase>().personLinkDao() }
         single { get<LogDateDatabase>().personResolutionDecisionDao() }
+        single { get<LogDateDatabase>().placeResolutionCacheDao() }
     }
