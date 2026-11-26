@@ -63,6 +63,10 @@ class PhoneStatePublisher(
     private val parts: Flow<PhoneStateParts> = flowOf(PhoneStateParts()),
     private val adoptWatchPreferences: suspend (Map<String, Stamped>) -> Unit = {},
     private val acceptsWatchPreferences: suspend (String, StateDocument) -> Boolean = { _, _ -> true },
+    private val appVersionName: String? = null,
+    private val appVersionCode: Int? = null,
+    private val protocolVersion: Int? = null,
+    private val minPeerProtocolVersion: Int? = null,
 ) {
     fun start(scope: CoroutineScope): Job =
         scope.launch {
@@ -123,6 +127,10 @@ class PhoneStatePublisher(
                                 v2Enabled && SharedPreferenceKey.RemindersEnabled.read(shared[SharedPreferenceKey.RemindersEnabled.name])
                             },
                         activity = current.activity.takeIf { current.activityAwareness },
+                        appVersionName = appVersionName,
+                        appVersionCode = appVersionCode,
+                        protocolVersion = protocolVersion,
+                        minPeerProtocolVersion = minPeerProtocolVersion,
                     ),
                 shared = shared,
                 lastReminderAt = postedAt,

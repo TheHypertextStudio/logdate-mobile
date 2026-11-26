@@ -65,8 +65,39 @@ class WatchSettingsViewModel(
     private val _installRequestSent = MutableStateFlow(false)
     val installRequestSent: StateFlow<Boolean> = _installRequestSent.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            var previousNodeId: String? = null
+            var previousStateType: kotlin.reflect.KClass<out WatchConnectionState>? = null
+            connectionState.collect { current ->
+                val nodeChanged = previousNodeId != null && current.nodeId != previousNodeId
+                val resolvedToDifferentPhase =
+                    previousStateType != current::class &&
+                        (
+                            current is WatchConnectionState.Connected ||
+                                current is WatchConnectionState.NeedsAssociation ||
+                                current is WatchConnectionState.NoPairedWatch
+                        )
+                if (nodeChanged || resolvedToDifferentPhase) {
+                    _installRequestSent.value = false
+                    _requestFailure.value = null
+                }
+                previousNodeId = current.nodeId
+                previousStateType = current::class
+            }
+        }
+    }
+
     fun refresh() {
         viewModelScope.launch { connectionManager.refresh() }
+    }
+
+    fun clearRequestFailure() {
+        _requestFailure.value = null
+    }
+
+    fun clearInstallRequestSent() {
+        _installRequestSent.value = false
     }
 
     fun selectWatch(nodeId: String) {
@@ -103,6 +134,13 @@ class WatchSettingsViewModel(
     fun installAppOnWatch() {
         _installRequestSent.value = false
         sendToWatch({ connectionManager.installAppOnWatch() }) { _installRequestSent.value = true }
+    }
+
+    fun updateAppOnWatch() {
+        _installRequestSent.value = false
+        sendToWatch({ connectionManager.updateAppOnWatch(connectionState.value.nodeId) }) {
+            _installRequestSent.value = true
+        }
     }
 
     fun openAppOnWatch() {

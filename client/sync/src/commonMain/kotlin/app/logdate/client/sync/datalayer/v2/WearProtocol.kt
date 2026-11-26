@@ -22,6 +22,12 @@ object WearProtocol {
     const val LIVE_SCHEMA = 1
     const val WINDOW_SCHEMA = 2
 
+    /** Current peer protocol generation spoken by this build. */
+    const val PROTOCOL_VERSION = 2
+
+    /** Oldest peer protocol generation this build still interoperates with. */
+    const val MIN_COMPATIBLE_PROTOCOL_VERSION = 2
+
     /** A state document is one small data item; anything larger belongs in its own path. */
     const val MAX_STATE_BYTES = 8 * 1024
 

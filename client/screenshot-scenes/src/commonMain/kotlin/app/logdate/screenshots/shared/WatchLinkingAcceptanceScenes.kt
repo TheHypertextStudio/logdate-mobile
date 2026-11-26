@@ -33,6 +33,20 @@ enum class WatchLinkingAcceptanceScene(
         ),
     ),
     SET_UP_AGAIN(WatchStatus.NeedsAttention("Pixel Watch 3", nearby = true, issue = WatchIssue.SetUpAgain)),
+    UPDATE_WATCH(
+        WatchStatus.NeedsAttention(
+            "Pixel Watch 5",
+            nearby = true,
+            issue = WatchIssue.WatchUpdateRequired(watchVersion = "0.1.0", phoneVersion = "0.2.0"),
+        ),
+    ),
+    UPDATE_PHONE(
+        WatchStatus.NeedsAttention(
+            "Pixel Watch 5",
+            nearby = true,
+            issue = WatchIssue.PhoneUpdateRequired(watchVersion = "0.3.0", phoneVersion = "0.2.0"),
+        ),
+    ),
 }
 
 @Composable
@@ -49,5 +63,6 @@ fun WatchLinkingAcceptanceContent(scene: WatchLinkingAcceptanceScene) {
         onNotifications = {},
         onDiagnostics = {},
         onRemove = {},
+        onUpdateOnPhone = {},
     )
 }

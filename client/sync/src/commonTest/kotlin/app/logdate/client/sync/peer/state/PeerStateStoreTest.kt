@@ -35,8 +35,13 @@ class PeerStateStoreTest {
     fun `an unsupported or malformed document is ignored`() =
         runTest {
             assertNull(store.accept("node", Decoded.Unsupported(2, "newer"), PeerRole.WATCH))
+            assertEquals(2, store.currentUnsupportedSchema("node"))
             assertNull(store.accept("node", Decoded.Malformed("broken"), PeerRole.WATCH))
             assertEquals(emptySet(), store.features(PeerRole.WATCH).first())
+
+            val supported = StateDocument(role = PeerRole.WATCH, writtenAt = 3, watch = WatchState())
+            assertEquals(supported, store.accept("node", Decoded.Supported(supported), PeerRole.WATCH))
+            assertNull(store.currentUnsupportedSchema("node"))
         }
 
     @Test

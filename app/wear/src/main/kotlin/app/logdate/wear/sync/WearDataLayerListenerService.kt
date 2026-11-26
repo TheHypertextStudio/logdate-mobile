@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.PackageInfoCompat
 import app.logdate.client.database.dao.journals.JournalContentDao
 import app.logdate.client.database.entities.journals.JournalContentEntityLink
 import app.logdate.client.datastore.featureflags.FeatureFlag
@@ -25,6 +26,7 @@ import app.logdate.client.sync.datalayer.RemoteCameraCaptureResultDataMapper
 import app.logdate.client.sync.datalayer.RemoteCameraDeviceDataMapper
 import app.logdate.client.sync.datalayer.v2.WatchDiagnosticsProtocol
 import app.logdate.client.sync.datalayer.v2.WatchDiagnosticsResponder
+import app.logdate.client.sync.datalayer.v2.WatchPingInfo
 import app.logdate.client.sync.datalayer.v2.WearJson
 import app.logdate.client.sync.datalayer.v2.WearPaths
 import app.logdate.client.sync.peer.removal.WatchRemovalProtocol
@@ -104,19 +106,15 @@ class WearDataLayerListenerService : WearableListenerService() {
         path: String,
         request: ByteArray,
     ): ByteArray? {
-        // Lightweight presence ping: proves LogDate is installed and reachable without waiting on Koin or SQLCipher.
+        val (versionName, versionCode) = readInstalledVersion()
+        // Lightweight presence ping: proves LogDate is installed and reports build/protocol version before Koin or SQLCipher.
         if (path == WearPaths.WATCH_PING) {
-            return byteArrayOf(1)
+            return WatchPingInfo(
+                appVersionName = versionName,
+                appVersionCode = versionCode,
+            ).encodeToBytes()
         }
-        if (!WatchLinkCoordinator.handles(path) &&
-            path != WearPaths.LIVE_RECORDING_COMMAND &&
-            path != WearPaths.LIVE_PLAYBACK_COMMAND &&
-            path != WearPaths.PRESENCE &&
-            path != WearPaths.REMINDERS_CLAIM &&
-            path != WearPaths.REMINDERS_DELIVER &&
-            path != WatchRemovalProtocol.PATH &&
-            path != WatchDiagnosticsProtocol.PATH
-        ) {
+        if (!isSupportedRequestPath(path)) {
             Napier.w("The phone sent a request this watch does not answer: $path")
             return null
         }
@@ -138,17 +136,7 @@ class WearDataLayerListenerService : WearableListenerService() {
         return if (path == WatchRemovalProtocol.PATH) {
             koin.get<WatchRemovalEndpoint>().answer(nodeId, request)
         } else if (path == WatchDiagnosticsProtocol.PATH) {
-            val peers = koin.get<WatchDeliveryPeer>()
-            val flags = koin.get<FeatureFlagStore>()
-            WatchDiagnosticsResponder(
-                current = peers::current,
-                enabled = { flags.isEnabled(FeatureFlag.WATCH_EXPERIENCE_V2) },
-                notificationsAllowed = { NotificationManagerCompat.from(this).areNotificationsEnabled() },
-                microphoneAllowed = {
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
-                        PackageManager.PERMISSION_GRANTED
-                },
-            ).answer(nodeId, request)
+            answerDiagnosticsRequest(koin, nodeId, request, versionName, versionCode)
         } else if (path == WearPaths.LIVE_RECORDING_COMMAND) {
             withContext(Dispatchers.Main.immediate) { koin.get<WatchRecordingContinuity>().answer(nodeId, request) }
         } else if (path == WearPaths.LIVE_PLAYBACK_COMMAND) {
@@ -164,6 +152,47 @@ class WearDataLayerListenerService : WearableListenerService() {
             koin.get<WatchLinkCoordinator>().answer(nodeId, path, request)
         }
     }
+
+    private fun isSupportedRequestPath(path: String): Boolean =
+        WatchLinkCoordinator.handles(path) ||
+            path == WearPaths.LIVE_RECORDING_COMMAND ||
+            path == WearPaths.LIVE_PLAYBACK_COMMAND ||
+            path == WearPaths.PRESENCE ||
+            path == WearPaths.REMINDERS_CLAIM ||
+            path == WearPaths.REMINDERS_DELIVER ||
+            path == WatchRemovalProtocol.PATH ||
+            path == WatchDiagnosticsProtocol.PATH
+
+    private suspend fun answerDiagnosticsRequest(
+        koin: org.koin.core.Koin,
+        nodeId: String,
+        request: ByteArray,
+        versionName: String?,
+        versionCode: Int?,
+    ): ByteArray? {
+        val peers = koin.get<WatchDeliveryPeer>()
+        val flags = koin.get<FeatureFlagStore>()
+        return WatchDiagnosticsResponder(
+            current = peers::current,
+            enabled = { flags.isEnabled(FeatureFlag.WATCH_EXPERIENCE_V2) },
+            notificationsAllowed = { NotificationManagerCompat.from(this).areNotificationsEnabled() },
+            microphoneAllowed = {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+                    PackageManager.PERMISSION_GRANTED
+            },
+            appVersionName = versionName,
+            appVersionCode = versionCode,
+        ).answer(nodeId, request)
+    }
+
+    private fun readInstalledVersion(): Pair<String?, Int?> =
+        try {
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            packageInfo.versionName to PackageInfoCompat.getLongVersionCode(packageInfo).toInt()
+        } catch (error: Exception) {
+            Napier.d(error) { "Could not read watch package version" }
+            null to null
+        }
 
     private fun playbackFailure(failure: HandoffFailure): ByteArray =
         WearJson.encodeToBytes(PlaybackHandoffResult.serializer(), PlaybackHandoffResult(accepted = false, failure = failure))

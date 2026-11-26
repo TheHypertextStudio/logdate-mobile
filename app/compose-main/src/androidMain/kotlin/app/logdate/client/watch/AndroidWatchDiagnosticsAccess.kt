@@ -8,14 +8,17 @@ import app.logdate.client.sync.datalayer.v2.WatchDiagnosticsRequest
 import app.logdate.client.sync.datalayer.v2.WatchDiagnosticsResponse
 import app.logdate.client.sync.datalayer.v2.WearJson
 import app.logdate.client.sync.datalayer.v2.WearProtocolGate
+import app.logdate.client.sync.datalayer.v2.evaluateWearCompatibility
 import app.logdate.client.sync.peer.state.PeerRole
 import app.logdate.client.sync.peer.state.PeerStateStore
 import app.logdate.client.sync.v2.receipts.PhoneDeliveryPeers
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchPeerSnapshot
+import app.logdate.feature.core.settings.ui.watch.WatchPingProbe
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticSnapshot
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticsAccess
+import app.logdate.feature.core.settings.ui.watch.v2.displayWatchName
 import com.google.android.gms.wearable.Wearable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -32,23 +35,52 @@ class AndroidWatchDiagnosticsAccess(
     private val peers: PhoneDeliveryPeers,
     private val states: PeerStateStore,
     private val gate: WearProtocolGate,
+    private val phoneVersion: String? = null,
 ) : WatchDiagnosticsAccess {
     override suspend fun inspect(): WatchDiagnosticSnapshot {
+        manager.refresh()
         val connection =
             withTimeoutOrNull(5_000) { manager.observeConnectionState().first { it != WatchConnectionState.Loading } }
                 ?: WatchConnectionState.Loading
-        val audience = connection.nodeId?.let { peers.current(it) }
+        val nodeId = connection.nodeId
+        val audience = nodeId?.let { peers.current(it) }
+        val rawDocument = nodeId?.let { states.documents(PeerRole.WATCH).first()[it] }
         val document =
             audience
-                ?.let { states.documents(PeerRole.WATCH).first()[it.watchNode] }
-                ?.takeIf { it.watch?.linkId == audience.linkId }
-        val peer = WatchPeerSnapshot(gate.isV2Active().first(), document?.watch, document?.watch?.features.orEmpty())
+                ?.let { rawDocument?.takeIf { doc -> doc.watch?.linkId == it.linkId } }
+        val pingProbe = nodeId?.let { manager.observePeerPing(it).first() }
         val reply = audience?.let { ping(it) }
+        val rawWatch = rawDocument?.watch
+        val pingInfo = (pingProbe as? WatchPingProbe.Supported)?.info
+        val watchVersion = rawWatch?.appVersionName ?: reply?.appVersionName ?: pingInfo?.appVersionName
+        val compatibility =
+            evaluateWearCompatibility(
+                localAppVersion = phoneVersion,
+                peerAppVersion = watchVersion,
+                peerProtocolVersion = rawWatch?.protocolVersion ?: reply?.protocolVersion ?: pingInfo?.protocolVersion,
+                peerMinPeerProtocolVersion =
+                    rawWatch?.minPeerProtocolVersion ?: reply?.minPeerProtocolVersion ?: pingInfo?.minPeerProtocolVersion,
+                peerSchemaUnsupported = nodeId?.let { states.currentUnsupportedSchema(it) != null } == true,
+                legacyPeerPing = pingProbe is WatchPingProbe.LegacyAck,
+            )
+        val peer =
+            WatchPeerSnapshot(
+                v2Active = gate.isV2Active().first(),
+                watch = document?.watch,
+                features = document?.watch?.features.orEmpty(),
+                phoneVersion = phoneVersion,
+                watchVersion = watchVersion,
+                compatibility = compatibility,
+            )
         return WatchDiagnosticSnapshot(
-            connection,
-            peer,
-            audience != null || associations.observeAssociationState().value is WatchAssociationSnapshot.Associated,
-            reply,
+            connection = connection,
+            peer = peer,
+            associated = audience != null || associations.observeAssociationState().value is WatchAssociationSnapshot.Associated,
+            reply = reply,
+            watchName = connection.displayWatchName(),
+            phoneVersion = phoneVersion,
+            watchVersion = watchVersion,
+            compatibility = compatibility,
         )
     }
 

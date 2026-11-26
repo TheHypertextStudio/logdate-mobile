@@ -53,6 +53,10 @@ class WatchOwnState(
     private val features: Set<String> = emptySet(),
     private val counts: Flow<WatchCounts> = flowOf(WatchCounts()),
     private val activity: Flow<ActivitySnapshot?> = flowOf(null),
+    private val appVersionName: String? = null,
+    private val appVersionCode: Int? = null,
+    private val protocolVersion: Int? = null,
+    private val minPeerProtocolVersion: Int? = null,
 ) {
     fun observe(): Flow<WatchState> =
         combine(links, counts, activity) { link, count, doing ->
@@ -66,6 +70,10 @@ class WatchOwnState(
                 linkId = link?.linkId,
                 sessionId = link?.sessionId,
                 activity = doing,
+                appVersionName = appVersionName,
+                appVersionCode = appVersionCode,
+                protocolVersion = protocolVersion,
+                minPeerProtocolVersion = minPeerProtocolVersion,
             )
         }.distinctUntilChanged()
 }

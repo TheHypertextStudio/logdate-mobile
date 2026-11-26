@@ -556,6 +556,127 @@ class WatchCompanionPageTest {
             onNodeWithText("Check connection").assertExists()
         }
 
+    @Test
+    fun `back navigation walks backward cleanly through watch chooser, install sent, and request failure before leaving setup`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            var backs = 0
+            var failure by mutableStateOf<WatchRequestFailure?>(null)
+            var installSent by mutableStateOf(false)
+            val watches =
+                listOf(
+                    DiscoveredWatch("watch-a", "Pixel Watch 5", isNearby = true, appInstalled = false),
+                    DiscoveredWatch("watch-b", "Galaxy Watch 7", isNearby = true, appInstalled = false),
+                )
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = WatchStatus.NotInstalled("Pixel Watch 5", "watch-a", availableWatches = watches),
+                        requestFailure = failure,
+                        onBack = { backs++ },
+                        onAssociate = {},
+                        onInstall = { installSent = true },
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        installRequestSent = installSent,
+                        onClearRequestFailure = { failure = null },
+                        onClearInstallRequestSent = { installSent = false },
+                    )
+                }
+            }
+
+            onNodeWithText("Choose your watch").assertExists()
+            onNodeWithText("Continue").performClick()
+            waitForIdle()
+            onNodeWithText("Install LogDate on Pixel Watch 5").assertExists()
+
+            onNodeWithText("Install on watch").performClick()
+            waitForIdle()
+            onNodeWithText("Finish installing on Pixel Watch 5").assertExists()
+
+            // Back on INSTALL_SENT returns to NOT_INSTALLED instead of closing the watch flow.
+            onNodeWithContentDescription("Back").performClick()
+            waitForIdle()
+            onNodeWithText("Install LogDate on Pixel Watch 5").assertExists()
+            assertEquals(0, backs)
+
+            // Back from an inline request failure clears the failure and returns to NOT_INSTALLED.
+            failure = WatchRequestFailure.WATCH_DID_NOT_RESPOND
+            waitForIdle()
+            onNodeWithText("Pixel Watch 5 didn’t respond").assertExists()
+            onNodeWithContentDescription("Back").performClick()
+            waitForIdle()
+            onNodeWithText("Install LogDate on Pixel Watch 5").assertExists()
+            assertEquals(0, backs)
+
+            // Back from single selected watch step returns to Choose your watch.
+            onNodeWithContentDescription("Back").performClick()
+            waitForIdle()
+            onNodeWithText("Choose your watch").assertExists()
+            assertEquals(0, backs)
+
+            // Back from the root chooser invokes the parent back navigation.
+            onNodeWithContentDescription("Back").performClick()
+            assertEquals(1, backs)
+        }
+
+    @Test
+    fun `version mismatch screens surface dedicated update actions for watch and phone`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            var updateWatchClicks = 0
+            var updatePhoneClicks = 0
+            var status by mutableStateOf<WatchStatus>(
+                WatchStatus.NeedsAttention(
+                    watchName = "Pixel Watch 5",
+                    nearby = true,
+                    issue = WatchIssue.WatchUpdateRequired(watchVersion = "0.1.0", phoneVersion = "0.2.0"),
+                ),
+            )
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = status,
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        onUpdateOnWatch = { updateWatchClicks++ },
+                        onUpdateOnPhone = { updatePhoneClicks++ },
+                    )
+                }
+            }
+
+            onNodeWithText("Update LogDate on Pixel Watch 5").assertExists()
+            onNodeWithText("0.1.0", substring = true).assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-update-watch.png")
+            onNodeWithText("Update on watch").performClick()
+            assertEquals(1, updateWatchClicks)
+            waitForIdle()
+            onNodeWithText("Finish updating on Pixel Watch 5").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-update-sent.png")
+
+            status =
+                WatchStatus.NeedsAttention(
+                    watchName = "Pixel Watch 5",
+                    nearby = true,
+                    issue = WatchIssue.PhoneUpdateRequired(watchVersion = "0.3.0", phoneVersion = "0.1.0"),
+                )
+            waitForIdle()
+            onNodeWithText("Update LogDate on this phone").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-update-phone.png")
+            onNodeWithText("Update on phone").performClick()
+            assertEquals(1, updatePhoneClicks)
+        }
+
     private fun saveScreenshot(
         image: ImageBitmap,
         filename: String = "watch-companion-page.png",

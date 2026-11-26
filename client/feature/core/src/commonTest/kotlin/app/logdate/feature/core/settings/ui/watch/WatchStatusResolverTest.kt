@@ -1,5 +1,6 @@
 package app.logdate.feature.core.settings.ui.watch
 
+import app.logdate.client.sync.datalayer.v2.WearCompatibility
 import app.logdate.client.sync.datalayer.v2.WearFeatures
 import app.logdate.client.sync.peer.state.PeerLinkState
 import app.logdate.client.sync.peer.state.WatchState
@@ -170,6 +171,69 @@ class WatchStatusResolverTest {
         assertEquals(
             WatchStatus.NeedsAttention(watchName = NAME, nearby = true, issue = WatchIssue.SetUpAgain),
             resolve(connected, reporting(both, WearFeatures.LINK_CLOUD, WearFeatures.RECEIPTS)),
+        )
+    }
+
+    @Test
+    fun `incompatible watch or phone version surfaces update attention before setup or ready`() {
+        val watchOld =
+            WatchPeerSnapshot(
+                v2Active = false,
+                watch = null,
+                features = emptySet(),
+                phoneVersion = "0.2.0",
+                watchVersion = "0.1.0",
+                compatibility = WearCompatibility.WatchUpdateRequired("0.2.0", "0.1.0"),
+            )
+        assertEquals(
+            WatchStatus.NeedsAttention(
+                watchName = NAME,
+                nearby = true,
+                issue = WatchIssue.WatchUpdateRequired("0.1.0", "0.2.0"),
+            ),
+            resolve(connected, watchOld),
+        )
+
+        val phoneOld =
+            WatchPeerSnapshot(
+                v2Active = false,
+                watch = null,
+                features = emptySet(),
+                phoneVersion = "0.1.0",
+                watchVersion = "0.3.0",
+                compatibility = WearCompatibility.PhoneUpdateRequired("0.1.0", "0.3.0"),
+            )
+        assertEquals(
+            WatchStatus.NeedsAttention(
+                watchName = NAME,
+                nearby = true,
+                issue = WatchIssue.PhoneUpdateRequired("0.3.0", "0.1.0"),
+            ),
+            resolve(WatchConnectionState.NeedsAssociation(NAME), phoneOld),
+        )
+    }
+
+    @Test
+    fun `compatible differing versions stay ready and retain both version names`() {
+        val diff =
+            WatchPeerSnapshot(
+                v2Active = true,
+                watch = WatchState(link = PeerLinkState.PAIRED),
+                features = setOf(WearFeatures.LINK_CLOUD),
+                phoneVersion = "0.2.1",
+                watchVersion = "0.2.0",
+                compatibility = WearCompatibility.Compatible("0.2.1", "0.2.0", versionsDiffer = true),
+            )
+        assertEquals(
+            WatchStatus.Ready(
+                watchName = NAME,
+                nearby = true,
+                link = WatchLinkLine.THROUGH_PHONE,
+                capabilities = setOf(WearFeatures.LINK_CLOUD),
+                watchVersion = "0.2.0",
+                phoneVersion = "0.2.1",
+            ),
+            resolve(connected, diff),
         )
     }
 

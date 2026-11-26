@@ -2,6 +2,7 @@ package app.logdate.di
 
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import app.logdate.client.device.AppInfoProvider
 import app.logdate.client.sync.AndroidPhoneAudioStreamOpener
 import app.logdate.client.sync.AndroidWatchNoteNotificationPoster
 import app.logdate.client.sync.DefaultPhoneWearSyncBridge
@@ -20,6 +21,8 @@ import app.logdate.client.sync.WatchNoteArrivalNotifier
 import app.logdate.client.sync.WatchNoteIngestor
 import app.logdate.client.sync.WatchNoteNotifier
 import app.logdate.client.sync.datalayer.NoteDataMapper
+import app.logdate.client.sync.datalayer.v2.WatchPingInfo
+import app.logdate.client.sync.datalayer.v2.WearPaths
 import app.logdate.client.sync.datalayer.v2.WearProtocol
 import app.logdate.client.sync.datalayer.v2.WearProtocolGate
 import app.logdate.client.sync.peer.state.LocalCapabilities
@@ -45,16 +48,21 @@ import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.WatchLinking
 import app.logdate.feature.core.settings.ui.watch.WatchPeerSnapshotSource
+import app.logdate.feature.core.settings.ui.watch.WatchPingProbe
 import app.logdate.feature.core.settings.ui.watch.v2.DefaultWatchSetupCoordinator
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticsAccess
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupCoordinator
 import com.google.android.gms.wearable.Wearable
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -121,6 +129,7 @@ internal val androidWearSyncModule: Module =
         single<WatchPeerSnapshotSource> {
             val peers = get<PhoneDeliveryPeers>()
             val links = get<PhoneWatchLinkStore>()
+            val phoneVersion = runCatching { get<AppInfoProvider>().getAppInfo().versionName }.getOrNull()
             PeerStateWatchSnapshotSource(
                 gate = get(),
                 peerStates = get(),
@@ -131,6 +140,8 @@ internal val androidWearSyncModule: Module =
                 relinkFailing = { node ->
                     links.observe().map { it[node]?.failure?.needsAttention == true }.distinctUntilChanged()
                 },
+                phoneVersion = phoneVersion,
+                pingProbe = { node -> get<WatchConnectionManager>().observePeerPing(node) },
             )
         }
 
@@ -154,7 +165,10 @@ internal val androidWearSyncModule: Module =
             app.logdate.client.sync.v2.removal
                 .AndroidWatchRemovalAccess(androidContext(), get(), get(), get(), get(), get(), get())
         }
-        single<WatchDiagnosticsAccess> { AndroidWatchDiagnosticsAccess(androidContext(), get(), get(), get(), get(), get()) }
+        single<WatchDiagnosticsAccess> {
+            val phoneVersion = runCatching { get<AppInfoProvider>().getAppInfo().versionName }.getOrNull()
+            AndroidWatchDiagnosticsAccess(androidContext(), get(), get(), get(), get(), get(), phoneVersion)
+        }
         single<WatchSetupCoordinator> {
             val peers = get<PhoneDeliveryPeers>()
             DefaultWatchSetupCoordinator(get(), verifiedReady = { state -> state.nodeId?.let { peers.current(it) } != null })
@@ -162,8 +176,9 @@ internal val androidWearSyncModule: Module =
 
         // Watch connection manager for Wear OS settings
         single<WatchConnectionManager> {
+            val appContext = androidContext()
             AndroidWatchConnectionManager(
-                context = androidContext(),
+                context = appContext,
                 associationManager = get(),
                 messageSender = get(),
                 ioDispatcher = get(qualifier = watchConnectionIoDispatcherQualifier),
@@ -197,6 +212,30 @@ internal val androidWearSyncModule: Module =
                     links.allowRelink(node)
                     links.retryNow(node)
                     get<app.logdate.client.sync.v2.link.PhoneLinkInitiator>().reconcileNow()
+                },
+                probeWatchInfo = { nodeId ->
+                    withTimeoutOrNull(2_000L) {
+                        try {
+                            val reply =
+                                Wearable
+                                    .getMessageClient(appContext)
+                                    .sendRequest(nodeId, WearPaths.WATCH_PING, byteArrayOf())
+                                    .await()
+                            WatchPingInfo.decodeOrNull(reply)?.let { WatchPingProbe.Supported(it) }
+                                ?: if (WatchPingInfo.isLegacyAck(reply)) {
+                                    WatchPingProbe.LegacyAck
+                                } else if (reply.isNotEmpty()) {
+                                    WatchPingProbe.ReachableUnknown
+                                } else {
+                                    WatchPingProbe.Unreachable
+                                }
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            Napier.d(error) { "Watch version ping did not reach $nodeId" }
+                            WatchPingProbe.Unreachable
+                        }
+                    } ?: WatchPingProbe.Unreachable
                 },
             )
         }

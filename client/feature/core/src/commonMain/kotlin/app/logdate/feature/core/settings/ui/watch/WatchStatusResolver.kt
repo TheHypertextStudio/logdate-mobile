@@ -1,5 +1,6 @@
 package app.logdate.feature.core.settings.ui.watch
 
+import app.logdate.client.sync.datalayer.v2.WearCompatibility
 import app.logdate.client.sync.datalayer.v2.WearFeatures
 import app.logdate.client.sync.peer.link.LinkProblem
 import app.logdate.client.sync.peer.state.PeerLinkState
@@ -43,6 +44,14 @@ object WatchStatusResolver {
             }
 
             is WatchConnectionState.NeedsAssociation -> {
+                compatibilityIssue(peer.compatibility)?.let { issue ->
+                    return WatchStatus.NeedsAttention(
+                        watchName = connection.watchName,
+                        nearby = connection.isNearby,
+                        issue = issue,
+                        nodeId = connection.nodeId,
+                    )
+                }
                 WatchStatus.SettingUp(
                     step =
                         connection.linking?.let { WatchSetupStep.Linking(connection.watchName, it.problem) }
@@ -82,7 +91,18 @@ object WatchStatusResolver {
         windowDays: Int,
         nodeId: String?,
     ): WatchStatus {
-        if (!peer.v2Active) return WatchStatus.Ready(watchName = watchName, nearby = nearby, nodeId = nodeId)
+        compatibilityIssue(peer.compatibility)?.let { issue ->
+            return WatchStatus.NeedsAttention(watchName = watchName, nearby = nearby, issue = issue, nodeId = nodeId)
+        }
+        if (!peer.v2Active) {
+            return WatchStatus.Ready(
+                watchName = watchName,
+                nearby = nearby,
+                nodeId = nodeId,
+                watchVersion = peer.watchVersion,
+                phoneVersion = peer.phoneVersion,
+            )
+        }
         val watch = peer.watch
         val features = peer.features
         issue(
@@ -98,8 +118,25 @@ object WatchStatusResolver {
             window = WatchWindowLine(days = windowDays).takeIf { WearFeatures.WINDOW in features },
             capabilities = features,
             nodeId = nodeId,
+            watchVersion = peer.watchVersion,
+            phoneVersion = peer.phoneVersion,
         )
     }
+
+    private fun compatibilityIssue(compatibility: WearCompatibility): WatchIssue? =
+        when (compatibility) {
+            is WearCompatibility.WatchUpdateRequired -> {
+                WatchIssue.WatchUpdateRequired(compatibility.watchVersion, compatibility.phoneVersion)
+            }
+
+            is WearCompatibility.PhoneUpdateRequired -> {
+                WatchIssue.PhoneUpdateRequired(compatibility.watchVersion, compatibility.phoneVersion)
+            }
+
+            is WearCompatibility.Compatible -> {
+                null
+            }
+        }
 
     private fun issue(
         watch: WatchState?,

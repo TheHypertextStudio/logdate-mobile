@@ -28,13 +28,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.logdate.feature.core.settings.ui.watch.WatchIssue
 import app.logdate.feature.core.settings.ui.watch.WatchLinkLine
 import app.logdate.feature.core.settings.ui.watch.WatchRequestFailure
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
@@ -45,6 +46,7 @@ import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.watch.WatchSetupProvider
 import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.watch_companion_versions
 import logdate.client.feature.core.generated.resources.watch_connected
 import logdate.client.feature.core.generated.resources.watch_link_on_its_own
 import logdate.client.feature.core.generated.resources.watch_link_through_phone
@@ -92,11 +94,18 @@ fun WatchCompanionPage(
     onOpenOnWatch: (() -> Unit)? = null,
     onSelectWatch: (String) -> Unit = {},
     onLibrary: (() -> Unit)? = null,
+    onUpdateOnWatch: () -> Unit = onInstall,
+    onUpdateOnPhone: (() -> Unit)? = null,
+    onClearRequestFailure: () -> Unit = {},
+    onClearInstallRequestSent: () -> Unit = {},
     preferences: (@Composable (captureActions: @Composable () -> Unit) -> Unit)? = null,
 ) {
-    val verified = status is WatchStatus.Ready || status is WatchStatus.NeedsAttention
-    var startedInSetup by remember { mutableStateOf(status != null && !verified) }
-    var completionDismissed by remember { mutableStateOf(false) }
+    val updateRequired =
+        status is WatchStatus.NeedsAttention &&
+            (status.issue is WatchIssue.WatchUpdateRequired || status.issue is WatchIssue.PhoneUpdateRequired)
+    val verified = status is WatchStatus.Ready || (status is WatchStatus.NeedsAttention && !updateRequired)
+    var startedInSetup by rememberSaveable { mutableStateOf(status != null && !verified) }
+    var completionDismissed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(status) {
         if (status != null && !verified) {
             startedInSetup = true
@@ -126,6 +135,10 @@ fun WatchCompanionPage(
             onSelectWatch = onSelectWatch,
             onDiagnostics = onDiagnostics,
             onCompleteDone = onCompleteDone,
+            onUpdateOnWatch = onUpdateOnWatch,
+            onUpdateOnPhone = onUpdateOnPhone,
+            onClearRequestFailure = onClearRequestFailure,
+            onClearInstallRequestSent = onClearInstallRequestSent,
         )
         return
     }
@@ -342,6 +355,13 @@ private fun WatchIdentityCopy(
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
+        if (status.watchVersion != null && status.phoneVersion != null && status.watchVersion != status.phoneVersion) {
+            Text(
+                stringResource(Res.string.watch_companion_versions, status.watchVersion, status.phoneVersion),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
             )
         }
     }

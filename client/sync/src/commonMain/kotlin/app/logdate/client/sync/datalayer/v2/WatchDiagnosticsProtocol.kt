@@ -20,6 +20,10 @@ data class WatchDiagnosticsResponse(
     val nonce: String,
     val notificationsAllowed: Boolean,
     val microphoneAllowed: Boolean,
+    val appVersionName: String? = null,
+    val appVersionCode: Int? = null,
+    val protocolVersion: Int? = null,
+    val minPeerProtocolVersion: Int? = null,
 )
 
 /** Answers only for the currently verified phone, checking again after reading permissions. */
@@ -28,6 +32,10 @@ class WatchDiagnosticsResponder(
     private val enabled: suspend () -> Boolean,
     private val notificationsAllowed: () -> Boolean,
     private val microphoneAllowed: () -> Boolean,
+    private val appVersionName: String? = null,
+    private val appVersionCode: Int? = null,
+    private val protocolVersion: Int = WearProtocol.PROTOCOL_VERSION,
+    private val minPeerProtocolVersion: Int = WearProtocol.MIN_COMPATIBLE_PROTOCOL_VERSION,
 ) {
     suspend fun answer(
         source: String,
@@ -50,6 +58,10 @@ class WatchDiagnosticsResponder(
                 nonce = request.nonce,
                 notificationsAllowed = notificationsAllowed(),
                 microphoneAllowed = microphoneAllowed(),
+                appVersionName = appVersionName,
+                appVersionCode = appVersionCode,
+                protocolVersion = protocolVersion,
+                minPeerProtocolVersion = minPeerProtocolVersion,
             )
         if (!enabled() || current() != peer) return null
         return WearJson.encodeToBytes(WatchDiagnosticsResponse.serializer(), response)

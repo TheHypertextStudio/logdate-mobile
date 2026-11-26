@@ -59,6 +59,10 @@ data class PhoneState(
     val features: Set<String> = emptySet(),
     val reminderHours: ReminderHours? = null,
     val activity: ActivitySnapshot? = null,
+    val appVersionName: String? = null,
+    val appVersionCode: Int? = null,
+    val protocolVersion: Int? = null,
+    val minPeerProtocolVersion: Int? = null,
 )
 
 @Serializable
@@ -101,6 +105,10 @@ data class WatchState(
     val linkId: String? = null,
     val sessionId: String? = null,
     val activity: ActivitySnapshot? = null,
+    val appVersionName: String? = null,
+    val appVersionCode: Int? = null,
+    val protocolVersion: Int? = null,
+    val minPeerProtocolVersion: Int? = null,
 )
 
 /**

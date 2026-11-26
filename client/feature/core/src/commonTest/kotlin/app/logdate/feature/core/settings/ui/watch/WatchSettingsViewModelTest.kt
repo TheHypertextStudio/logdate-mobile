@@ -178,6 +178,29 @@ class WatchSettingsViewModelTest {
             assertEquals(WatchRequestFailure.WATCH_DID_NOT_RESPOND, viewModel.requestFailure.value)
         }
 
+    @Test
+    fun `updateAppOnWatch sends Play update request and moving into Connected clears transient setup flags`() =
+        runTest {
+            val connectionManager = FakeWatchConnectionManager(initialState = WatchConnectionState.AppUnknown("Pixel Watch", "watch-a"))
+            val viewModel =
+                WatchSettingsViewModel(
+                    connectionManager = connectionManager,
+                    settingsRepository = FakeWatchSettingsRepository(),
+                )
+            backgroundScope.launch { viewModel.connectionState.collect {} }
+            advanceUntilIdle()
+
+            viewModel.updateAppOnWatch()
+            advanceUntilIdle()
+            assertEquals(true, viewModel.installRequestSent.value)
+            assertEquals(listOf<String?>("watch-a"), connectionManager.updateRequests)
+
+            connectionManager.emit(WatchConnectionState.Connected("Pixel Watch", "watch-a"))
+            advanceUntilIdle()
+            assertEquals(false, viewModel.installRequestSent.value)
+            assertNull(viewModel.requestFailure.value)
+        }
+
     private class FakeWatchConnectionManager(
         initialState: WatchConnectionState = WatchConnectionState.Loading,
         private val installResult: WatchRequestResult = WatchRequestResult.Sent,
@@ -186,6 +209,11 @@ class WatchSettingsViewModelTest {
         private val state = MutableStateFlow(initialState)
 
         var beginAssociationCalls: Int = 0
+        val updateRequests = mutableListOf<String?>()
+
+        fun emit(newState: WatchConnectionState) {
+            state.value = newState
+        }
 
         override fun observeConnectionState(): Flow<WatchConnectionState> = state.asStateFlow()
 
@@ -197,6 +225,11 @@ class WatchSettingsViewModelTest {
         }
 
         override suspend fun installAppOnWatch(): WatchRequestResult = installResult
+
+        override suspend fun updateAppOnWatch(nodeId: String?): WatchRequestResult {
+            updateRequests += nodeId
+            return installResult
+        }
 
         override suspend fun openAppOnWatch(): WatchRequestResult = openResult
     }

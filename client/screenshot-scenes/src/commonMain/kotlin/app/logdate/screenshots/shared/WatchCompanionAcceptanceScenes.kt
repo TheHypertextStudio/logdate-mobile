@@ -12,6 +12,7 @@ import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPage
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPreferences
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionSections
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticCheck
+import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticDetail
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticFix
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticOutcome
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticStep
@@ -69,29 +70,34 @@ private fun CompanionDiagnostics() {
     WatchDiagnosticsContent(
         state =
             WatchDiagnosticsState.Ready(
-                WatchDiagnosticCheck.entries.map { check ->
-                    when (check) {
-                        WatchDiagnosticCheck.SYNC -> {
-                            WatchDiagnosticStep(
-                                check,
-                                WatchDiagnosticOutcome.FIXABLE,
-                                WatchDiagnosticFix.SYNC,
-                            )
-                        }
-
-                        WatchDiagnosticCheck.NOTIFICATIONS -> {
-                            WatchDiagnosticStep(
-                                check,
-                                WatchDiagnosticOutcome.FIXABLE,
-                                WatchDiagnosticFix.OPEN_WATCH,
-                            )
-                        }
-
-                        else -> {
-                            WatchDiagnosticStep(check, WatchDiagnosticOutcome.PASSED)
-                        }
-                    }
-                },
+                steps =
+                    listOf(
+                        WatchDiagnosticStep(
+                            check = WatchDiagnosticCheck.APP_VERSION,
+                            outcome = WatchDiagnosticOutcome.PASSED,
+                            detail = WatchDiagnosticDetail.VersionCompatibleDifferent("0.1.9", "0.2.0"),
+                        ),
+                        WatchDiagnosticStep(
+                            check = WatchDiagnosticCheck.CONNECTION,
+                            outcome = WatchDiagnosticOutcome.PASSED,
+                            detail = WatchDiagnosticDetail.ConnectionReady("Pixel Watch"),
+                        ),
+                        WatchDiagnosticStep(
+                            check = WatchDiagnosticCheck.SYNC,
+                            outcome = WatchDiagnosticOutcome.NEEDS_ACTION,
+                            detail = WatchDiagnosticDetail.SyncPending(3),
+                            fix = WatchDiagnosticFix.SYNC,
+                        ),
+                        WatchDiagnosticStep(
+                            check = WatchDiagnosticCheck.NOTIFICATIONS,
+                            outcome = WatchDiagnosticOutcome.NEEDS_ACTION,
+                            detail = WatchDiagnosticDetail.NotificationsDisabled,
+                            fix = WatchDiagnosticFix.OPEN_WATCH,
+                        ),
+                    ),
+                watchName = "Pixel Watch",
+                watchVersion = "0.1.9",
+                phoneVersion = "0.2.0",
             ),
         busy = false,
         onCheck = {},

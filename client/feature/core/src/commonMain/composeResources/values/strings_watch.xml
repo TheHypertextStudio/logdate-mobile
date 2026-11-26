@@ -72,6 +72,28 @@
     <string
     name="watch_attention_not_sent_description"
   >Your watch keeps trying. Keep it near this phone with Bluetooth on.</string>
+    <string name="watch_setup_update_watch_title">Update LogDate on %1$s</string>
+    <string
+    name="watch_setup_update_watch_description"
+  >Update LogDate from Google Play on your watch so both devices stay in sync.</string>
+    <string
+    name="watch_setup_update_watch_versions_description"
+  >Your watch is running LogDate %1$s and this phone is running %2$s. Update LogDate on your watch to stay in sync.</string>
+    <string name="watch_setup_update_watch_action">Update on watch</string>
+    <string name="watch_setup_update_sent_title">Finish updating on %1$s</string>
+    <string
+    name="watch_setup_update_sent_description"
+  >Check your watch to finish updating LogDate from Google Play, then open it.</string>
+    <string name="watch_setup_send_update_again">Send update prompt again</string>
+    <string name="watch_setup_update_phone_title">Update LogDate on this phone</string>
+    <string
+    name="watch_setup_update_phone_description"
+  >Your watch is running a newer version of LogDate than this phone. Update LogDate on Google Play to connect.</string>
+    <string
+    name="watch_setup_update_phone_versions_description"
+  >Your watch is running LogDate %1$s and this phone is running %2$s. Update LogDate on this phone from Google Play to connect.</string>
+    <string name="watch_setup_update_phone_action">Update on phone</string>
+    <string name="watch_companion_versions">Watch %1$s · Phone %2$s</string>
 
     <!-- Watch sync -->
     <string name="watch_sync">Sync</string>
@@ -172,16 +194,51 @@
     <string name="watch_v2_today_count">%1$d moments</string>
     <string name="watch_v2_today_loading">Waiting for today</string>
     <string name="watch_v2_check_passed">Passed</string>
-    <string name="watch_v2_check_fixable">Needs attention</string>
-    <string name="watch_v2_check_failed">Could not verify</string>
-    <string name="watch_v2_check_watch">A watch is seen</string>
-    <string name="watch_v2_check_app">LogDate is installed</string>
-    <string name="watch_v2_check_protocol">Compatible protocol</string>
-    <string name="watch_v2_check_association">Associated with this phone</string>
-    <string name="watch_v2_check_link">Link is set up</string>
-    <string name="watch_v2_check_ping">Watch answered within 5 seconds</string>
-    <string name="watch_v2_check_sync">Watch sync</string>
+    <string name="watch_v2_check_fixable">Needs action</string>
+    <string name="watch_v2_check_waiting">Waiting on an earlier check</string>
+    <string name="watch_v2_check_connection">Watch connection</string>
+    <string name="watch_v2_check_app_version">LogDate app and version</string>
+    <string name="watch_v2_check_sync">Moments sync</string>
     <string name="watch_v2_check_notifications">Watch notifications</string>
+    <string name="watch_v2_detail_connection_ok">%1$s is connected and responding.</string>
+    <string name="watch_v2_detail_connection_needs_pair">%1$s isn’t linked to your LogDate account yet.</string>
+    <string
+    name="watch_v2_detail_connection_unresponsive"
+  >%1$s didn’t answer. Wake your watch, keep it nearby, and open LogDate on it.</string>
+    <string
+    name="watch_v2_detail_connection_missing_app"
+  >Install or update LogDate on %1$s before checking the connection.</string>
+    <string name="watch_v2_detail_app_version_ok_same">Phone and watch are both running LogDate %1$s.</string>
+    <string name="watch_v2_detail_app_version_ok_diff">Watch %1$s · Phone %2$s (compatible).</string>
+    <string name="watch_v2_detail_app_version_ok_installed">LogDate is installed on %1$s.</string>
+    <string name="watch_v2_detail_app_version_missing">LogDate isn’t installed on %1$s yet.</string>
+    <string
+    name="watch_v2_detail_app_version_unknown"
+  >Can’t confirm whether LogDate is on %1$s. Open it on your watch or install it from Google Play.</string>
+    <string
+    name="watch_v2_detail_app_version_update_watch"
+  >Your watch needs a newer version of LogDate to match this phone.</string>
+    <string
+    name="watch_v2_detail_app_version_update_watch_versions"
+  >Your watch is on %1$s and this phone is on %2$s. Update LogDate on your watch.</string>
+    <string
+    name="watch_v2_detail_app_version_update_phone"
+  >This phone needs a newer version of LogDate to match your watch.</string>
+    <string
+    name="watch_v2_detail_app_version_update_phone_versions"
+  >Your watch is on %1$s and this phone is on %2$s. Update LogDate on this phone.</string>
+    <string name="watch_v2_detail_sync_ok">All watch moments are synced to this phone.</string>
+    <plurals name="watch_v2_detail_sync_pending">
+        <item quantity="one">%1$d moment is waiting to sync from your watch.</item>
+        <item quantity="other">%1$d moments are waiting to sync from your watch.</item>
+    </plurals>
+    <plurals name="watch_v2_detail_sync_failed">
+        <item quantity="one">%1$d moment couldn’t sync yet. Keep your watch nearby and sync again.</item>
+        <item quantity="other">%1$d moments couldn’t sync yet. Keep your watch nearby and sync again.</item>
+    </plurals>
+    <string name="watch_v2_detail_sync_waiting">Connect to your watch to check pending sync.</string>
+    <string name="watch_v2_detail_notifications_ok">Notifications are allowed on your watch.</string>
+    <string name="watch_v2_detail_notifications_waiting">Connect to your watch to check notification access.</string>
     <string name="watch_v2_check_again">Check again</string>
     <string name="watch_v2_check_running">Checking your watch…</string>
     <string name="watch_v2_diagnostics_all_good">Everything looks good</string>
@@ -194,11 +251,19 @@
     <string
     name="watch_v2_check_error"
   >Couldn’t check your watch. Keep it nearby and try again.</string>
-    <string name="watch_v2_fix_pair">Pair watch</string>
+    <string name="watch_v2_fix_pair">Connect watch</string>
     <string name="watch_v2_fix_install">Install LogDate</string>
-    <string name="watch_v2_fix_update">Update LogDate</string>
+    <string name="watch_v2_fix_update_watch">Update on watch</string>
+    <string name="watch_v2_fix_update_phone">Update on phone</string>
     <string name="watch_v2_fix_open">Open on watch</string>
     <string name="watch_v2_fix_sync">Sync now</string>
+    <string name="watch_v2_action_sent_pair">Connection started for your phone and watch.</string>
+    <string name="watch_v2_action_sent_install">Google Play opened on your watch to install LogDate.</string>
+    <string name="watch_v2_action_sent_update_watch">Google Play opened on your watch to update LogDate.</string>
+    <string name="watch_v2_action_sent_update_phone">Google Play opened on this phone to update LogDate.</string>
+    <string name="watch_v2_action_sent_open">Sent a request to open LogDate on your watch.</string>
+    <string name="watch_v2_action_sent_sync">Sync requested. Keep your watch nearby.</string>
+    <string name="watch_v2_action_failed">Couldn’t complete that action. Keep your watch nearby and try again.</string>
     <string
     name="watch_v2_tiles_today_description"
   >See today’s moments and start a recording. On your watch, touch and hold the current tile, swipe to Add tiles, then choose LogDate Today.</string>

@@ -17,7 +17,15 @@ class WatchDiagnosticsResponderTest {
 
     @Test fun `verified phone gets actual permissions and nonce echo`() =
         runTest {
-            val responder = WatchDiagnosticsResponder({ peer }, { true }, { false }, { true })
+            val responder =
+                WatchDiagnosticsResponder(
+                    current = { peer },
+                    enabled = { true },
+                    notificationsAllowed = { false },
+                    microphoneAllowed = { true },
+                    appVersionName = "0.2.0",
+                    appVersionCode = 200,
+                )
             val bytes = assertNotNull(responder.answer("phone", payload))
             val response =
                 (
@@ -30,6 +38,9 @@ class WatchDiagnosticsResponderTest {
             assertEquals("test", response.nonce)
             assertEquals(false, response.notificationsAllowed)
             assertEquals(true, response.microphoneAllowed)
+            assertEquals("0.2.0", response.appVersionName)
+            assertEquals(200, response.appVersionCode)
+            assertEquals(WearProtocol.PROTOCOL_VERSION, response.protocolVersion)
         }
 
     @Test fun `other phone and disabled rollout never receive permissions`() =

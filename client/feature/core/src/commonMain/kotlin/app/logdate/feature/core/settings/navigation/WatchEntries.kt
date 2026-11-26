@@ -37,7 +37,7 @@ fun EntryProviderScope<NavKey>.watchEntries(
                 onNavigateTo = onNavigateToCategory,
                 onBack = onBack,
                 onNavigateToProfile = onNavigateToProfile,
-                onNavigateToWatch = {},
+                onNavigateToWatch = { onNavigateToCategory(WatchSettingsRoute) },
             )
         }
     taggedEntry<WatchSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.Watch, categories)) {

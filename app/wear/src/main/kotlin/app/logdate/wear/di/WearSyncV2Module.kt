@@ -4,6 +4,7 @@ import android.content.Context
 import app.logdate.client.datastore.LogDateConfigDataSource
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import app.logdate.client.device.AndroidAppInfoProvider
 import app.logdate.client.device.crypto.link.BouncyCastleLinkHandshake
 import app.logdate.client.domain.activity.ActivityTracker
 import app.logdate.client.domain.activity.toSnapshot
@@ -12,6 +13,7 @@ import app.logdate.client.sync.DefaultSyncManager
 import app.logdate.client.sync.datalayer.v2.LinkNonceLedger
 import app.logdate.client.sync.datalayer.v2.PeerDeliveryContext
 import app.logdate.client.sync.datalayer.v2.WearFeatures
+import app.logdate.client.sync.datalayer.v2.WearProtocol
 import app.logdate.client.sync.peer.delivery.PeerDeliveryLedger
 import app.logdate.client.sync.peer.link.LinkInstaller
 import app.logdate.client.sync.peer.link.PairKeyVault
@@ -176,6 +178,7 @@ val wearSyncV2Module =
         }
         single { WatchCaptureDelivery(get(), get()) } bind WatchNotesV2::class
         single {
+            val appInfo = runCatching { AndroidAppInfoProvider(get()).getAppInfo() }.getOrNull()
             WatchOwnState(
                 links = get<WatchLinkStore>().observe(),
                 features = watchSyncFeatures,
@@ -189,6 +192,10 @@ val wearSyncV2Module =
                     combine(get<FeatureFlagStore>().observe(FeatureFlag.ACTIVITY_AWARENESS), get<ActivityTracker>().local) { on, log ->
                         log.toSnapshot().takeIf { on }
                     },
+                appVersionName = appInfo?.versionName,
+                appVersionCode = appInfo?.versionCode,
+                protocolVersion = WearProtocol.PROTOCOL_VERSION,
+                minPeerProtocolVersion = WearProtocol.MIN_COMPATIBLE_PROTOCOL_VERSION,
             )
         }
     }
