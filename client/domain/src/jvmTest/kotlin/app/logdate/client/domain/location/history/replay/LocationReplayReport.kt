@@ -56,21 +56,31 @@ internal fun replayDays(
         }
 }
 
-internal fun formatReplay(days: List<ReplayDay>): String =
+internal fun formatReplay(
+    days: List<ReplayDay>,
+    goldenReports: List<BenchmarkSuiteReport> = emptyList(),
+): String =
     buildString {
         days.forEach { day ->
             appendLine("${day.date}  ${sampleSummary(day.samples)}")
             day.itemsByAlgorithm.forEach { (name, items) -> appendLine("  ${name.padEnd(18)} ${itemSummary(items)}") }
         }
-        appendLine()
-        appendLine("All days")
-        appendLine("  ${sampleSummary(days.flatMap { it.samples })}")
-        days
-            .first()
-            .itemsByAlgorithm.keys
-            .forEach { name ->
-                appendLine("  ${name.padEnd(18)} ${itemSummary(days.flatMap { it.itemsByAlgorithm.getValue(name) })}")
-            }
+        if (days.isNotEmpty()) {
+            appendLine()
+            appendLine("All days")
+            appendLine("  ${sampleSummary(days.flatMap { it.samples })}")
+            days
+                .first()
+                .itemsByAlgorithm.keys
+                .forEach { name ->
+                    appendLine("  ${name.padEnd(18)} ${itemSummary(days.flatMap { it.itemsByAlgorithm.getValue(name) })}")
+                }
+        }
+        if (goldenReports.isNotEmpty()) {
+            appendLine()
+            appendLine("Golden benchmark")
+            goldenReports.forEach { report -> appendLine(formatBenchmarkReport(report)) }
+        }
     }
 
 private fun sampleSummary(samples: List<LocationObservation>): String {

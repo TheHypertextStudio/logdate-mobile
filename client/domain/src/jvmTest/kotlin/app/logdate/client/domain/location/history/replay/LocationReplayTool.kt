@@ -40,7 +40,8 @@ class LocationReplayTool {
         val samples = decode(inputFile)
         val days = replayDays(samples, zone, algorithms())
         output.mkdirs()
-        val report = formatReplay(days)
+        val goldenReports = evaluateGoldenCorpus(algorithms())
+        val report = formatReplay(days, goldenReports)
         output.resolve("report.txt").writeText(report)
         days.forEach { day ->
             day.itemsByAlgorithm.forEach { (name, items) ->
@@ -59,6 +60,16 @@ class LocationReplayTool {
 
     private fun withMinimumStay(minimumStay: Duration) =
         ReconstructLocationDay(parameters = HistoryReconstructionParameters(minimumStay = minimumStay))
+
+    private fun evaluateGoldenCorpus(algorithms: List<ReplayAlgorithm>): List<BenchmarkSuiteReport> {
+        val scenarios = GoldenLocationCorpus.allScenarios()
+        return algorithms.map { algorithm ->
+            BenchmarkSuiteReport(
+                algorithmName = algorithm.name,
+                scenarios = scenarios.map { scenario -> scoreGoldenScenario(scenario, algorithm.reconstruct(scenario.observations)) },
+            )
+        }
+    }
 
     /** Reads either archive format: v1 `location_history.json` or v2 `location-history.jsonl`. */
     private fun decode(file: File): List<LocationObservation> {
