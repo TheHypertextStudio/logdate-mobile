@@ -124,7 +124,7 @@ class EntryCreationResizeReturnTest {
             val initialViewport = onNodeWithTag("creation_viewport").getUnclippedBoundsInRoot()
             assertEquals(390.dp, initialViewport.right - initialViewport.left, "Fixture must actually be compact before launch")
             onNodeWithContentDescription("Add a memory").performClick()
-            mainClock.advanceTimeBy(500)
+            mainClock.advanceTimeBy(1_000) // The Expressive container spring settles after its small overshoot.
             waitForIdle()
             val sourceId = assertNotNull(launchId)
             assertEquals(EntryCreationShape.Round, launchShape, "Fixture must launch from the real compact header")

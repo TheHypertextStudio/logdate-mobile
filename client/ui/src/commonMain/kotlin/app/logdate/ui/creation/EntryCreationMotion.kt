@@ -4,11 +4,11 @@ package app.logdate.ui.creation
 
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -31,9 +31,37 @@ import app.logdate.ui.platform.rememberSystemReduceMotion
 
 val LocalEntryCreationProgress = compositionLocalOf { 1f }
 
-/** The existing Home/editor bounds timing, also used by route-linked foreground reveal. */
+/**
+ * Material 3 Expressive spring values. The app theme keeps the standard motion scheme for
+ * everything else, so entry motion names these values directly instead of reading the theme.
+ */
+object ExpressiveMotion {
+    /** Expressive default spatial spring: a container that moves or resizes, with a small settle. */
+    const val SPATIAL_DAMPING = 0.8f
+    const val SPATIAL_STIFFNESS = 380f
+
+    /**
+     * The same clock with no overshoot, for values that drive corners, alpha and reveals. Sharing
+     * the stiffness keeps them in step with the container they belong to.
+     */
+    const val EFFECTS_DAMPING = Spring.DampingRatioNoBouncy
+}
+
+/** The container itself: the create button growing into the entry, and back. */
+fun <T> entryCreationBoundsSpec(reduceMotion: Boolean): FiniteAnimationSpec<T> =
+    if (reduceMotion) {
+        snap()
+    } else {
+        spring(ExpressiveMotion.SPATIAL_DAMPING, ExpressiveMotion.SPATIAL_STIFFNESS)
+    }
+
+/** Route progress: corner flattening and the foreground reveal, on the container's clock. */
 fun <T> entryCreationMotionSpec(reduceMotion: Boolean): FiniteAnimationSpec<T> =
-    if (reduceMotion) snap() else tween(350, easing = FastOutSlowInEasing)
+    if (reduceMotion) {
+        snap()
+    } else {
+        spring(ExpressiveMotion.EFFECTS_DAMPING, ExpressiveMotion.SPATIAL_STIFFNESS)
+    }
 
 fun entryCreationBarProgress(routeProgress: Float): Float = ((routeProgress - 0.55f) / 0.45f).coerceIn(0f, 1f)
 
@@ -82,7 +110,7 @@ fun Modifier.entryCreationBounds(
         this@entryCreationBounds.sharedBounds(
             rememberSharedContentState(entryCreationKey(sourceId)),
             visibility,
-            boundsTransform = BoundsTransform { _, _ -> entryCreationMotionSpec(reduceMotion) },
+            boundsTransform = BoundsTransform { _, _ -> entryCreationBoundsSpec(reduceMotion) },
             clipInOverlayDuringTransition = OverlayClip(shape),
         )
     }
