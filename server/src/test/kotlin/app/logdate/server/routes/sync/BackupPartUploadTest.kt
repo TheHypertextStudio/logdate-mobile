@@ -54,7 +54,7 @@ class BackupPartUploadTest {
     private val tokenService = JwtTokenService("backup-part-secret")
     private val auth = "Bearer ${tokenService.generateAccessToken(UUID.randomUUID().toString())}"
 
-    /** Small parts keep the test's memory low; the server's real parts are [BACKUP_PART_BYTES]. */
+    /** Small parts keep the test's memory low; the server's real parts are TransferLimits.backupPartBytes long. */
     private val partBytes = 64L * 1024
 
     /** Two full parts and a short third, so ordering and the last part's length both matter. */

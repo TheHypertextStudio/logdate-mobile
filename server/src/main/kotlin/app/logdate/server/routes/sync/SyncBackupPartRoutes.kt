@@ -14,7 +14,6 @@ import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.responses.error
 import app.logdate.server.routes.docs.BackupPartUploadDocs
 import app.logdate.server.sync.SyncMetricsRegistry
-import app.logdate.server.transfer.TransferLimits
 import app.logdate.server.transfer.TransferSlots
 import app.logdate.shared.model.sync.BackupPartUploadCompleteRequest
 import app.logdate.shared.model.sync.BackupPartUploadStartRequest
@@ -42,9 +41,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.file.Files
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
-
-/** Each part but the last is this long by default: well under the 100 MB a proxy in front may allow. */
-internal val BACKUP_PART_BYTES: Long = TransferLimits().backupPartBytes
 
 /** The most parts one backup is sent in. */
 internal const val MAX_BACKUP_PARTS = 64

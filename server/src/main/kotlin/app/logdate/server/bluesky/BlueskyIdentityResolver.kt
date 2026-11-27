@@ -31,7 +31,20 @@ internal class BlueskyIdentityResolver(
     override suspend fun resolveDid(handle: Handle): Result<AtprotoDid> =
         verified {
             require(!forbiddenDomain(handle.normalized))
-            val answers = if (handle.normalized.length + 9 <= 253) dns(handle) else emptyList()
+            val answers =
+                if (handle.normalized.length + 9 > 253) {
+                    emptyList()
+                } else {
+                    try {
+                        txt.records("_atproto.${handle.normalized}")
+                    } catch (canceled: CancellationException) {
+                        throw canceled
+                    } catch (invalid: BlueskyInvalidDnsAnswer) {
+                        throw invalid
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                }
             val identities =
                 answers
                     .mapNotNull { value ->
@@ -58,17 +71,6 @@ internal class BlueskyIdentityResolver(
             resolveDocument(did).getOrThrow().also { document ->
                 require(document.claimedHandle()?.normalized == handle.normalized)
             }
-        }
-
-    private suspend fun dns(handle: Handle): List<String> =
-        try {
-            txt.records("_atproto.${handle.normalized}")
-        } catch (canceled: CancellationException) {
-            throw canceled
-        } catch (invalid: BlueskyInvalidDnsAnswer) {
-            throw invalid
-        } catch (_: Exception) {
-            emptyList()
         }
 
     private suspend fun fetch(
