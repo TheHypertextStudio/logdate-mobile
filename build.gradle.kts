@@ -137,6 +137,27 @@ subprojects {
         baseline.set(file("detekt-baseline.xml"))
     }
 
+    // The Compose preview renderer reads library R classes from the screenshot test compile
+    // classpath beside the app's runtime R.jar. When the two classpaths resolve a library to
+    // different versions, it pairs one version's R with the other's R$attr and every preview fails
+    // with "disagree on InnerClasses attribute" (androidx.customview 1.0.0 against 1.2.0). Resolve
+    // each screenshot test compile classpath to the versions its runtime classpath uses.
+    pluginManager.withPlugin("com.android.compose.screenshot") {
+        configurations.configureEach {
+            val compileName =
+                when {
+                    name.endsWith("ScreenshotTestCompileClasspath") -> name
+                    name.endsWith("ScreenshotTestRuntimeClasspath") ->
+                        name.removeSuffix("RuntimeClasspath") + "CompileClasspath"
+                    else -> return@configureEach
+                }
+            val runtimeName = compileName.removeSuffix("CompileClasspath") + "RuntimeClasspath"
+            val compile = configurations.findByName(compileName) ?: return@configureEach
+            val runtime = configurations.findByName(runtimeName) ?: return@configureEach
+            compile.shouldResolveConsistentlyWith(runtime)
+        }
+    }
+
     dependencies {
         components {
             listOf(
