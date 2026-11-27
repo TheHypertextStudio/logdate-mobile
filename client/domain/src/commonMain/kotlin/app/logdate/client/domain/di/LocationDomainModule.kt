@@ -23,7 +23,20 @@ import org.koin.dsl.module
  */
 val locationDomainModule: Module =
     module {
-        single { LocationHistoryService(get(), get(), get(), get(), get(), get(), get(), activityHistory = get()) }
+        single {
+            LocationHistoryService(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                activityHistory = get(),
+                placeFamiliarity = getOrNull(),
+                placeResolutionCache = getOrNull(),
+            )
+        }
         // Location History
         factory { GetLocationHistoryUseCase(get()) }
         factory { DeleteLocationEntryUseCase(get()) }

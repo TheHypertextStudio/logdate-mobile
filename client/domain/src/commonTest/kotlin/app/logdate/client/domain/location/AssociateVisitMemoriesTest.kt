@@ -47,4 +47,31 @@ class AssociateVisitMemoriesTest {
         val result = AssociateVisitMemories()(listOf(visit, other), listOf(note), emptyList())
         assertEquals(listOf(emptyList(), emptyList()), result.map { it.memoryIds })
     }
+
+    @Test
+    fun `matches note within 5m boundary grace and uncertainty-expanded spatial tolerance`() {
+        val wideVisit =
+            visit.copy(
+                id = "wide",
+                evidenceIds = listOf("w"),
+                uncertaintyRadiusMeters = 80f,
+            )
+        // 3 minutes before arrival and ~95m away should still match scored association.
+        val edgeNote =
+            note.copy(
+                creationTimestamp = start - 3.minutes,
+                location = NoteLocation(coordinates = NoteCoordinates(36.00085, -115.0)),
+            )
+        val result = AssociateVisitMemories()(listOf(wideVisit), listOf(edgeNote), emptyList())
+        assertEquals(listOf(edgeNote.uid.toString()), result.single().memoryIds)
+    }
+
+    @Test
+    fun `prefers visit strictly containing timestamp when two candidates overlap`() {
+        val earlier = visit.copy(id = "earlier", start = start - 30.minutes, end = start, evidenceIds = listOf("e"))
+        val strictlyInsideNote = note.copy(creationTimestamp = start + 2.minutes)
+        val result = AssociateVisitMemories()(listOf(earlier, visit), listOf(strictlyInsideNote), emptyList())
+        assertEquals(emptyList(), result.first().memoryIds)
+        assertEquals(listOf(strictlyInsideNote.uid.toString()), result.last().memoryIds)
+    }
 }

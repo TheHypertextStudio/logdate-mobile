@@ -259,7 +259,7 @@ val domainModule: Module =
         }
         factory { GetTimelinePageUseCase(get(), get(), get(), get<GetTimelineDayUseCase>()) }
         factory { InferMomentsUseCase(get(), get()) }
-        factory { GetTimelineDayUseCase(get(), get(), get(), get()) }
+        factory { GetTimelineDayUseCase(get(), get(), get(), get(), getOrNull(), getOrNull()) }
         factory { SummarizeJournalEntriesUseCase(get()) }
 
         // Include health domain module
@@ -313,7 +313,7 @@ val domainModule: Module =
 
         // Places
         factory { ResolveLocationToPlaceUseCase(get(), get(), get()) }
-        single { PlaceResolutionCache(get()) }
+        single { PlaceResolutionCache(get(), store = getOrNull()) }
         factory {
             val placeResolutionCache: PlaceResolutionCache = get()
             ObserveCapturePlaceUseCase(get(), placeResolutionCache::resolve, get())

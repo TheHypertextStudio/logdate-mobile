@@ -1,16 +1,27 @@
 package app.logdate.client.domain.timeline
 
 import app.logdate.client.domain.entities.ExtractPeopleUseCase
+import app.logdate.client.domain.location.history.LocationHistoryService
+import app.logdate.client.domain.location.history.LocationHistorySnapshot
+import app.logdate.client.domain.location.history.geographicDistance
+import app.logdate.client.domain.places.PlaceResolutionCache
+import app.logdate.client.domain.places.PlaceResolutionResult
 import app.logdate.client.intelligence.AIResult
 import app.logdate.client.intelligence.MAX_AI_INPUT_CHARACTERS
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.NoteLocation
+import app.logdate.shared.model.AltitudeUnit
 import app.logdate.shared.model.Event
+import app.logdate.shared.model.Location
+import app.logdate.shared.model.LocationAltitude
 import app.logdate.shared.model.Person
+import app.logdate.shared.model.location.PlaceVisit
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.round
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 data class Timeline(
@@ -172,6 +183,8 @@ class GetTimelineDayUseCase(
     private val getMediaUrisUseCase: GetMediaUrisUseCase,
     private val extractPeopleUseCase: ExtractPeopleUseCase,
     private val inferMomentsUseCase: InferMomentsUseCase,
+    private val locationHistoryService: LocationHistoryService? = null,
+    private val placeResolutionCache: PlaceResolutionCache? = null,
 ) : TimelineDayBuilder {
     /**
      * Creates a TimelineDay from journal entries for a specific date.
@@ -217,7 +230,8 @@ class GetTimelineDayUseCase(
         // Keep the media lookup warm for downstream screens even though the list cards rely on raw notes.
         getMediaUrisUseCase(date)
 
-        val placesVisited = extractPlacesVisited(entries)
+        val historySnapshot = runCatching { locationHistoryService?.observeDay(date)?.first() }.getOrNull()
+        val placesVisited = extractUnifiedPlacesVisited(entries, historySnapshot, placeResolutionCache)
         val moments = inferMomentsUseCase(date, entries, placesVisited)
 
         return TimelineDay(
@@ -253,8 +267,117 @@ fun interface TimelineDayBuilder {
 
 internal fun extractPlacesVisited(entries: List<JournalNote>): List<TimelinePlaceVisit> =
     entries
-        .mapNotNull { note -> note.location?.toTimelinePlaceVisit() }
+        .mapNotNull { note -> note.location?.toTimelinePlaceVisit(allowRawCoordinates = true) }
         .distinctBy(TimelinePlaceVisit::id)
+
+internal suspend fun extractUnifiedPlacesVisited(
+    entries: List<JournalNote>,
+    historySnapshot: LocationHistorySnapshot?,
+    placeResolutionCache: PlaceResolutionCache?,
+): List<TimelinePlaceVisit> {
+    if (historySnapshot == null && placeResolutionCache == null) {
+        return extractPlacesVisited(entries)
+    }
+    val aliases = historySnapshot?.placeAliases.orEmpty()
+    val confirmedHistoryVisits =
+        historySnapshot
+            ?.items
+            ?.filterIsInstance<PlaceVisit>()
+            ?.filter { it.confirmedStay && it.place != null }
+            .orEmpty()
+
+    val chronologicalFromHistory =
+        confirmedHistoryVisits.mapNotNull { visit ->
+            val place = visit.place ?: return@mapNotNull null
+            val resolvedId = aliases[place.id] ?: place.id
+            visit.start to
+                TimelinePlaceVisit(
+                    id = resolvedId,
+                    name = place.name,
+                    latitude = visit.latitude,
+                    longitude = visit.longitude,
+                )
+        }
+
+    val fromNotes =
+        entries.mapNotNull { note ->
+            val location = note.location ?: return@mapNotNull null
+            val latitude = location.effectiveLatitude
+            val longitude = location.effectiveLongitude
+            val explicitPlace = location.place
+            val explicitName = explicitPlace?.name
+            if (explicitPlace != null && explicitName != null) {
+                val id = aliases[explicitPlace.id.toString()] ?: explicitPlace.id.toString()
+                return@mapNotNull note.creationTimestamp to
+                    TimelinePlaceVisit(
+                        id = id,
+                        name = explicitName,
+                        latitude = explicitPlace.latitude,
+                        longitude = explicitPlace.longitude,
+                    )
+            }
+            if (location.displayName != null) {
+                return@mapNotNull location.toTimelinePlaceVisit(allowRawCoordinates = false)?.let {
+                    note.creationTimestamp to it
+                }
+            }
+            if (latitude == null || longitude == null) return@mapNotNull null
+            val matchingVisit =
+                historySnapshot
+                    ?.items
+                    ?.filterIsInstance<PlaceVisit>()
+                    ?.firstOrNull { visit ->
+                        visit.place != null &&
+                            note.creationTimestamp >= visit.start - 5.minutes &&
+                            note.creationTimestamp <= visit.end + 5.minutes &&
+                            geographicDistance(visit.latitude, visit.longitude, latitude, longitude) <=
+                            maxOf(100.0, visit.uncertaintyRadiusMeters.toDouble() + 35.0)
+                    }
+            val matchedPlace = matchingVisit?.place
+            if (matchedPlace != null) {
+                val id = aliases[matchedPlace.id] ?: matchedPlace.id
+                return@mapNotNull note.creationTimestamp to
+                    TimelinePlaceVisit(
+                        id = id,
+                        name = matchedPlace.name,
+                        latitude = matchingVisit.latitude,
+                        longitude = matchingVisit.longitude,
+                    )
+            }
+            val resolved =
+                runCatching {
+                    placeResolutionCache?.resolve(
+                        Location(latitude, longitude, LocationAltitude(0.0, AltitudeUnit.METERS)),
+                    )
+                }.getOrNull()
+            val label =
+                when (resolved) {
+                    is PlaceResolutionResult.UserDefinedPlace -> resolved.place.name
+                    is PlaceResolutionResult.ExternalSuggestion -> resolved.suggestion.name
+                    is PlaceResolutionResult.CoarseLocation -> resolved.address.formatFallbackLabel()
+                    else -> null
+                } ?: return@mapNotNull null
+            val resolvedId =
+                when (resolved) {
+                    is PlaceResolutionResult.UserDefinedPlace -> resolved.place.uid.toString()
+                    is PlaceResolutionResult.ExternalSuggestion ->
+                        resolved.suggestion.externalId ?: "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
+                    else -> "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
+                }
+            note.creationTimestamp to
+                TimelinePlaceVisit(
+                    id = aliases[resolvedId] ?: resolvedId,
+                    name = label,
+                    latitude = latitude,
+                    longitude = longitude,
+                )
+        }
+
+    return (chronologicalFromHistory + fromNotes)
+        .sortedBy { it.first }
+        .map { it.second }
+        .distinctBy(TimelinePlaceVisit::id)
+}
 
 internal fun extractDayParts(entries: List<JournalNote>): List<DayPart> {
     val groupedEntries =
@@ -291,13 +414,14 @@ internal fun extractDayParts(entries: List<JournalNote>): List<DayPart> {
     }
 }
 
-private fun NoteLocation.toTimelinePlaceVisit(): TimelinePlaceVisit? {
+private fun NoteLocation.toTimelinePlaceVisit(allowRawCoordinates: Boolean = true): TimelinePlaceVisit? {
     val latitude = effectiveLatitude ?: return null
     val longitude = effectiveLongitude ?: return null
+    val label = displayName ?: if (allowRawCoordinates) "${roundCoordinate(latitude)}, ${roundCoordinate(longitude)}" else return null
     val coordinateKey = "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
     return TimelinePlaceVisit(
         id = place?.id?.toString() ?: coordinateKey,
-        name = displayName ?: "${roundCoordinate(latitude)}, ${roundCoordinate(longitude)}",
+        name = label,
         latitude = latitude,
         longitude = longitude,
     )

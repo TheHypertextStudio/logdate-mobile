@@ -54,11 +54,16 @@ class AndroidReverseGeocodingProvider(
                 }
 
             address?.let {
+                val streetNumber =
+                    it.subThoroughfare?.trim()?.takeIf { value -> value.any(Char::isDigit) }
+                        ?: it.featureName?.trim()?.takeIf { value -> value.isNotEmpty() && value.all(Char::isDigit) }
                 GeocodedAddress(
                     thoroughfare = it.thoroughfare,
                     subLocality = it.subLocality,
                     locality = it.locality,
                     adminArea = it.adminArea,
+                    subThoroughfare = streetNumber,
+                    countryCode = it.countryCode,
                 )
             }
         } catch (e: Exception) {

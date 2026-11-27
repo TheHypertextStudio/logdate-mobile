@@ -49,6 +49,7 @@ import logdate.client.feature.location.timeline.generated.resources.history_toda
 import logdate.client.feature.location.timeline.generated.resources.history_visit_count
 import logdate.client.ui.generated.resources.common_try_again
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import logdate.client.ui.generated.resources.Res as UiRes
@@ -448,16 +449,31 @@ class HumanLocationHistoryViewModel(
         if (unresolved.isEmpty()) return
         enrichmentJob =
             viewModelScope.launch {
+                val activeZone = currentZone()
                 unresolved.forEach { visit ->
                     try {
+                        val dwell = visit.end - visit.start
+                        val searchRadius = (visit.uncertaintyRadiusMeters * 1.5).coerceIn(60.0, 120.0)
+                        val visitZone =
+                            visit.displayZoneId?.let { runCatching { TimeZone.of(it) }.getOrNull() }
+                                ?: activeZone
+                        val overnight = dwell >= 5.hours && overlapsOvernightWindow(visit.start, visit.end, visitZone)
                         val result =
-                            placeResolution.resolve(
-                                Location(visit.latitude, visit.longitude, LocationAltitude(0.0, AltitudeUnit.METERS)),
+                            placeResolution.resolveWithContext(
+                                location = Location(visit.latitude, visit.longitude, LocationAltitude(0.0, AltitudeUnit.METERS)),
+                                searchRadiusMeters = searchRadius,
+                                dwellDuration = dwell,
+                                isOvernightResidential = overnight,
                             )
                         if (result is PlaceResolutionResult.UserDefinedPlace && data.places.any { it.id == result.place.uid.toString() }) {
                             return@forEach
                         }
-                        resolvedPlace(result, visit)?.let { history.savePlace(it) }
+                        resolvedPlace(result, visit)?.let { place ->
+                            history.savePlace(place)
+                            if (result !is PlaceResolutionResult.UserDefinedPlace && visit.evidenceIds.isNotEmpty()) {
+                                history.correct(visit.evidenceIds.first(), HistoryField.SUGGESTED_PLACE, place.id)
+                            }
+                        }
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Exception) {
@@ -465,6 +481,18 @@ class HumanLocationHistoryViewModel(
                     }
                 }
             }
+    }
+
+    private fun overlapsOvernightWindow(
+        start: Instant,
+        end: Instant,
+        zone: TimeZone,
+    ): Boolean {
+        val localStart = start.toLocalDateTime(zone)
+        val localEnd = end.toLocalDateTime(zone)
+        return localStart.hour in 0..4 ||
+            localEnd.hour in 0..4 ||
+            (localStart.date != localEnd.date && localEnd.hour >= 0)
     }
 
     private suspend fun resolvedPlace(

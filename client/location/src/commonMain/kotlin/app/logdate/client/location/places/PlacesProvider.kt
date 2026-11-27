@@ -15,6 +15,14 @@ interface ExternalPlacesProvider {
      * @return List of place suggestions with confidence scores (0-100)
      */
     suspend fun searchNearbyPlaces(location: Location): List<PlaceSuggestion>
+
+    /**
+     * Searches for places near [location] bounded by [radiusMeters].
+     */
+    suspend fun searchNearbyPlaces(
+        location: Location,
+        radiusMeters: Double,
+    ): List<PlaceSuggestion> = searchNearbyPlaces(location)
 }
 
 /**
@@ -28,4 +36,5 @@ data class PlaceSuggestion(
     val confidence: Int,
     val category: String? = null,
     val externalId: String? = null,
+    val types: List<String> = emptyList(),
 )

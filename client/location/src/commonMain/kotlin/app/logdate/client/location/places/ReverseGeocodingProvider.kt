@@ -26,7 +26,26 @@ data class GeocodedAddress(
     val subLocality: String?,
     val locality: String?,
     val adminArea: String?,
-)
+    val subThoroughfare: String? = null,
+    val countryCode: String? = null,
+) {
+    fun formatFallbackLabel(): String? {
+        val number = subThoroughfare?.trim()?.takeIf { it.isNotEmpty() }
+        val street = thoroughfare?.trim()?.takeIf { it.isNotEmpty() }
+        val neighborhood = subLocality?.trim()?.takeIf { it.isNotEmpty() }
+        val city = locality?.trim()?.takeIf { it.isNotEmpty() }
+        val state = adminArea?.trim()?.takeIf { it.isNotEmpty() }
+        return when {
+            number != null && street != null -> "$number $street"
+            street != null -> street
+            neighborhood != null && city != null -> "$neighborhood, $city"
+            neighborhood != null -> neighborhood
+            city != null -> city
+            state != null -> state
+            else -> null
+        }
+    }
+}
 
 /**
  * No-op [ReverseGeocodingProvider] for platforms that do not support geocoding.
