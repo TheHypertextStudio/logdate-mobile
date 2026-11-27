@@ -42,7 +42,14 @@
     />
 
         <!-- Receives activity transition events (STILL, WALKING, IN_VEHICLE) from Google Play Services -->
-        <receiver android:name=".tracking.ActivityTransitionReceiver" android:exported="false" />
+        <receiver
+            android:name=".tracking.ActivityTransitionReceiver"
+            android:exported="false" />
+
+        <!-- Wakes the foreground stream when leaving a 100 m stationary stay anchor -->
+        <receiver
+            android:name=".tracking.StayExitGeofenceReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>
