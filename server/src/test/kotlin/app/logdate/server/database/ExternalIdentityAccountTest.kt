@@ -53,8 +53,10 @@ class ExternalIdentityAccountTest {
                 val hosted = external().copy(identityKind = AccountIdentityKind.HOSTED)
                 assertTrue(repository.create(hosted))
                 org.jetbrains.exposed.v1.jdbc.transactions.transaction {
+                    // H2 commits each DDL statement, so a retried attempt would fail on the dropped column.
+                    maxAttempts = 1
                     exec("ALTER TABLE accounts DROP COLUMN identity_kind")
-                    exec(requireNotNull(javaClass.classLoader.getResource("db/migration/V63__Add_account_identity_kind.sql")).readText())
+                    h2CompatibleStatements("db/migration/V63__Add_account_identity_kind.sql").forEach { exec(it) }
                 }
                 assertEquals(AccountIdentityKind.HOSTED, repository.findById(hosted.id)?.identityKind)
                 org.jetbrains.exposed.v1.jdbc.transactions.transaction {
@@ -98,6 +100,21 @@ class ExternalIdentityAccountTest {
                 }
             }
         }
+
+    // H2 has no PL/pgSQL triggers, so the PLC publication guard that V63 recreates is left to the PostgreSQL test.
+    private fun h2CompatibleStatements(resource: String): List<String> =
+        requireNotNull(javaClass.classLoader.getResource(resource))
+            .readText()
+            .split(";")
+            .map(::withoutSqlComments)
+            .filter { statement -> statement.isNotEmpty() && "TRIGGER" !in statement }
+
+    private fun withoutSqlComments(statement: String): String =
+        statement
+            .lines()
+            .filterNot { line -> line.trimStart().startsWith("--") }
+            .joinToString("\n")
+            .trim()
 
     private suspend fun verifyIsolation(repository: AccountRepository) {
         val account = external()
