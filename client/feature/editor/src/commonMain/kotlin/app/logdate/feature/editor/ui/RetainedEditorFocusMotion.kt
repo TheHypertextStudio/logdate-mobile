@@ -23,6 +23,7 @@ internal class RetainedEditorFocusMotion(
     private val initialFocus: Uuid?,
     private val currentFocus: () -> Uuid?,
     private val reduceMotion: () -> Boolean,
+    private val settleArrivingFocus: () -> Boolean,
     private val dismissAction: () -> (() -> Boolean),
     private val onPrepare: () -> Unit,
     private val onProgress: (Float) -> Unit,
@@ -47,8 +48,16 @@ internal class RetainedEditorFocusMotion(
     val progress: Map<Uuid, Float> get() = owners.mapValues { it.value.value }
     val surfaceProgress: Float get() = currentFocus()?.let { owners[it]?.value } ?: owners.values.maxOfOrNull { it.value } ?: 0f
 
+    /**
+     * A memory starts in focus when it was focused from the start, or when it is the first memory
+     * of an entry that is still opening. The second case is the preferred mode (for example the
+     * camera) arriving while the create button grows into the entry: it lands in focus inside that
+     * one motion instead of opening a second, separate focus motion after it.
+     */
     fun ensure(id: Uuid) {
-        if (id !in owners) owners[id] = Animatable(if (id == initialFocus) 1f else 0f)
+        if (id in owners) return
+        val arrivesFocused = owners.isEmpty() && id == currentFocus() && settleArrivingFocus()
+        owners[id] = Animatable(if (id == initialFocus || arrivesFocused) 1f else 0f)
     }
 
     suspend fun retarget(ids: Set<Uuid>) {
@@ -135,10 +144,12 @@ internal fun rememberRetainedEditorFocusMotion(
     onCommit: () -> Unit,
     onCancel: () -> Unit,
     inputGeneration: Uuid? = null,
+    settleArrivingFocus: () -> Boolean = { false },
 ): RetainedEditorFocusMotion {
     val scope = rememberCoroutineScope()
     val currentFocus by rememberUpdatedState(focusedId)
     val reduced by rememberUpdatedState(reduceMotion)
+    val settleArrival by rememberUpdatedState(settleArrivingFocus)
     val dismiss by rememberUpdatedState(onDismiss)
     val prepare by rememberUpdatedState(onPrepare)
     val progress by rememberUpdatedState(onProgress)
@@ -148,7 +159,7 @@ internal fun rememberRetainedEditorFocusMotion(
         remember {
             RetainedEditorFocusMotion(scope, focusedId, {
                 currentFocus
-            }, { reduced }, { dismiss }, { prepare() }, { progress(it) }, { commit() }, { cancel() })
+            }, { reduced }, { settleArrival() }, { dismiss }, { prepare() }, { progress(it) }, { commit() }, { cancel() })
         }
     ids.forEach(motion::ensure)
     LaunchedEffect(focusedId, inputGeneration, ids, reduceMotion) { motion.retarget(ids) }

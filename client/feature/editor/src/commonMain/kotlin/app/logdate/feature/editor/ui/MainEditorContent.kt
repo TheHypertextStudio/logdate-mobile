@@ -40,6 +40,7 @@ import app.logdate.feature.editor.ui.editor.delegate.PendingAudioResolver
 import app.logdate.feature.editor.ui.layout.EditorFocus
 import app.logdate.feature.editor.ui.layout.editorFocus
 import app.logdate.feature.editor.ui.state.BlocksUiState
+import app.logdate.ui.creation.LocalEntryCreationOpening
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import kotlin.uuid.Uuid
 
@@ -159,6 +160,7 @@ fun MainEditorContent(
                 onBackCommit,
                 onBackCancel,
                 inputGeneration = LocalEditorInputTokens.current[(displayState as? EditorDisplay.Expanded)?.block?.id],
+                settleArrivingFocus = LocalEntryCreationOpening.current,
             )
         } else {
             null

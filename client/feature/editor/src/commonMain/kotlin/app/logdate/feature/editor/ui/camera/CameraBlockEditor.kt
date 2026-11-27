@@ -1,5 +1,12 @@
 package app.logdate.feature.editor.ui.camera
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +27,7 @@ import app.logdate.feature.editor.ui.common.MediaOverlayCaptionArea
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.formatMediaDuration
 import app.logdate.ui.platform.PlatformIcons
+import app.logdate.ui.platform.rememberSystemReduceMotion
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
@@ -48,43 +56,71 @@ fun CameraBlockEditor(
     onPersistCaptureTarget: suspend (Uuid, String, CapturedMediaType) -> Boolean = { _, _, _ -> false },
     modifier: Modifier = Modifier,
 ) {
-    val hasExistingMedia = block.uri != null
+    val reduceMotion = rememberSystemReduceMotion().value
+    val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    // Each side keeps its own snapshot of the block, so the leaving viewfinder never sees the new uri.
+    AnimatedContent(
+        targetState = block,
+        contentKey = { it.uri != null },
+        transitionSpec = {
+            when {
+                reduceMotion -> {
+                    EnterTransition.None togetherWith ExitTransition.None
+                }
 
-    if (hasExistingMedia) {
-        CapturedMediaContent(
-            block = block,
-            onBlockUpdated = onBlockUpdated,
-            onDiscardMedia = {
-                onBlockUpdated(
-                    block.copy(
-                        uri = null,
-                        caption = "",
-                        durationMs = 0,
-                    ),
-                )
-            },
-            modifier = modifier,
-        )
-    } else {
-        CameraCaptureContent(
-            pendingFilePath = block.pendingFilePath,
-            onPrepareCaptureTarget = { path, type -> onPersistCaptureTarget(block.id, path, type) },
-            onMediaCaptured = { uri, mediaType, durationMs ->
-                onBlockUpdated(
-                    block.copy(
-                        uri = uri,
-                        pendingFilePath = null,
-                        mediaType = mediaType,
-                        durationMs = durationMs,
-                    ),
-                )
-            },
-            onClose = onDeleteRequested,
-            modifier = modifier,
-            initialCaptureMode = block.initialCaptureMode,
-        )
+                // The shot settles into the card from the viewfinder's full frame.
+                targetState.uri != null -> {
+                    val settle = fadeIn(effects) + scaleIn(spatial, initialScale = CAPTURED_SHOT_START_SCALE)
+                    settle togetherWith fadeOut(effects)
+                }
+
+                else -> {
+                    fadeIn(effects) togetherWith fadeOut(effects)
+                }
+            }
+        },
+        label = "cameraBlockPhase",
+        modifier = modifier,
+    ) { shown ->
+        if (shown.uri != null) {
+            CapturedMediaContent(
+                block = shown,
+                onBlockUpdated = onBlockUpdated,
+                onDiscardMedia = {
+                    onBlockUpdated(
+                        shown.copy(
+                            uri = null,
+                            caption = "",
+                            durationMs = 0,
+                        ),
+                    )
+                },
+            )
+        } else {
+            CameraCaptureContent(
+                pendingFilePath = shown.pendingFilePath,
+                onPrepareCaptureTarget = { path, type -> onPersistCaptureTarget(shown.id, path, type) },
+                onMediaCaptured = { uri, mediaType, durationMs ->
+                    onBlockUpdated(
+                        shown.copy(
+                            uri = uri,
+                            pendingFilePath = null,
+                            mediaType = mediaType,
+                            durationMs = durationMs,
+                        ),
+                    )
+                },
+                onClose = onDeleteRequested,
+                modifier = Modifier.fillMaxSize(),
+                initialCaptureMode = shown.initialCaptureMode,
+            )
+        }
     }
 }
+
+/** The captured shot starts at the viewfinder's edge-to-edge size and settles into its inset card. */
+private const val CAPTURED_SHOT_START_SCALE = 1.04f
 
 /**
  * Displays captured media (photo or video) with caption editing and delete option.

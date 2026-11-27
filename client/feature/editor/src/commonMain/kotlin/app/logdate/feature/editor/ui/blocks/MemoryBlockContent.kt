@@ -268,6 +268,7 @@ internal fun MemoryCaptionField(
  * stands upright, centered, instead of shrinking inside a widescreen box. Tall clips stop at
  * [EntryVideoMaxHeight] so one clip can't fill the page.
  */
+@Suppress("ktlint:standard:function-naming")
 @Composable
 private fun EntryVideo(uri: String) {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
