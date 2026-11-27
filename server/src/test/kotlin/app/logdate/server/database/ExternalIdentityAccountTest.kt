@@ -102,19 +102,16 @@ class ExternalIdentityAccountTest {
         }
 
     // H2 has no PL/pgSQL triggers, so the PLC publication guard that V63 recreates is left to the PostgreSQL test.
+    // Comments go before the split because V63's comments contain semicolons.
     private fun h2CompatibleStatements(resource: String): List<String> =
         requireNotNull(javaClass.classLoader.getResource(resource))
             .readText()
-            .split(";")
-            .map(::withoutSqlComments)
-            .filter { statement -> statement.isNotEmpty() && "TRIGGER" !in statement }
-
-    private fun withoutSqlComments(statement: String): String =
-        statement
             .lines()
             .filterNot { line -> line.trimStart().startsWith("--") }
             .joinToString("\n")
-            .trim()
+            .split(";")
+            .map(String::trim)
+            .filter { statement -> statement.isNotEmpty() && "TRIGGER" !in statement }
 
     private suspend fun verifyIsolation(repository: AccountRepository) {
         val account = external()
