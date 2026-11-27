@@ -75,6 +75,10 @@ entry_points:
   - 'app.logdate.HandleApnsRegistrationFailed'
   - 'app.logdate.HandleSilentPushSync'
   - 'app.logdate.di.initKoinIos'
+  # Called only by the app/android-main androidTest suites, which are not roots, to start the app
+  # or wait for its Koin graph before a test runs.
+  - 'app.logdate.client.ensureLogDateApplicationStarted'
+  - 'app.logdate.client.awaitLogDateDependencies'
   # Rendered only by the screenshot tests (app/android-main/src/screenshotTest and the scenes in
   # client/screenshot-scenes), which are not roots: SyncSurfaceScreenshots,
   # Flow06_02_RewindStoryScreenshots, SharedDesktopOnlyScenes and the adaptive audit screenshots.

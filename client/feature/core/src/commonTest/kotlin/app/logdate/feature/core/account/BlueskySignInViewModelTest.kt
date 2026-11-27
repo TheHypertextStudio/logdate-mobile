@@ -97,7 +97,7 @@ class BlueskySignInViewModelTest {
         }
 
     @Test
-    fun `saved registration details win over a late local profile and cannot be edited`() =
+    fun `saved registration details win over a late local profile`() =
         runTest {
             val f = Fixture()
             val profile = CompletableDeferred<AccountCreationRequest>()
@@ -108,7 +108,6 @@ class BlueskySignInViewModelTest {
             runCurrent()
             profile.complete(AccountCreationRequest("local", "Local Name"))
             runCurrent()
-            vm.updateDetails("changed", "Changed")
             assertEquals(saved, vm.uiState.value.details)
             assertTrue(vm.uiState.value.detailsLocked)
             vm.createAccount()
@@ -187,20 +186,6 @@ class BlueskySignInViewModelTest {
             assertFalse(vm.uiState.value.available)
             assertNull(vm.uiState.value.browserUrl)
             assertTrue(f.repo.cancellations > 0)
-        }
-
-    @Test
-    fun `late profile loading cannot replace typed details`() =
-        runTest {
-            val f = Fixture()
-            val loaded = CompletableDeferred<AccountCreationRequest>()
-            val vm = f.model(profile = { loaded.await() })
-            runCurrent()
-            vm.updateDetails("typed", "Typed Name")
-            loaded.complete(AccountCreationRequest("old", "Old Name"))
-            runCurrent()
-            assertEquals("typed", vm.uiState.value.details.username)
-            assertEquals("Typed Name", vm.uiState.value.details.displayName)
         }
 
     @Test

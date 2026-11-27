@@ -37,7 +37,6 @@ class BlueskySignInViewModel(
     val stage = repository.state
     private var action: Job? = null
     private var completion: Job? = null
-    private var editedDetails = false
     private var completedAccount: String? = null
     private var previousOrigin: String? = null
     private var leavingCompletedFlow = false
@@ -54,7 +53,7 @@ class BlueskySignInViewModel(
         viewModelScope.launch {
             try {
                 val profile = initialProfile()
-                if (!editedDetails && !mutableUi.value.detailsLocked) mutableUi.update { it.copy(details = profile) }
+                if (!mutableUi.value.detailsLocked) mutableUi.update { it.copy(details = profile) }
             } catch (canceled: CancellationException) {
                 throw canceled
             } catch (_: Exception) {
@@ -115,15 +114,6 @@ class BlueskySignInViewModel(
 
     fun updateHandle(value: String) {
         mutableUi.update { it.copy(handle = value, failure = null) }
-    }
-
-    fun updateDetails(
-        username: String,
-        displayName: String,
-    ) {
-        if (mutableUi.value.detailsLocked) return
-        editedDetails = true
-        mutableUi.update { it.copy(details = it.details.copy(username = username, displayName = displayName), failure = null) }
     }
 
     fun start() {
@@ -310,8 +300,6 @@ data class BlueskySignInUiState(
     val signupGeneration: Int = 0,
     val failure: BlueskySignInFailure? = null,
 ) {
-    val canCreateAccount: Boolean get() = details.isValidBlueskyProfile()
-
     override fun toString(): String = "BlueskySignInUiState()"
 }
 
