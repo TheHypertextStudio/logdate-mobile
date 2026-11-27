@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -96,7 +96,7 @@ internal fun FocusedEntryHeader(
                 modifier = Modifier.size(HeaderButtonSize).semantics { contentDescription = returnDescription },
                 colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = StoryChrome),
             ) {
-                Icon(Icons.Outlined.Check, null, Modifier.size(HeaderIconSize))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, null, Modifier.size(HeaderIconSize))
             }
         }
         Column(Modifier.weight(1f)) {
@@ -129,7 +129,7 @@ internal fun FocusedEntryHeader(
                 ) {
                     when {
                         saving -> CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                        else -> Icon(Icons.Outlined.Save, null, Modifier.size(HeaderIconSize))
+                        else -> Icon(Icons.Outlined.Check, null, Modifier.size(HeaderIconSize))
                     }
                 }
             }
