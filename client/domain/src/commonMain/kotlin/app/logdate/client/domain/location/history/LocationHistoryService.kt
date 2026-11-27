@@ -46,6 +46,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -55,6 +56,12 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 enum class HistoryFailedSection { NOTES, PLACES, ACTIVITY }
+
+data class RecordedDaySummary(
+    val date: LocalDate,
+    val hasVisits: Boolean,
+    val hasMemories: Boolean,
+)
 
 data class LocationHistorySnapshot(
     val items: List<LocationDayItem>,
@@ -523,9 +530,108 @@ class LocationHistoryService(
         val hasUserLabel = edits.any { it.field == HistoryField.LABEL && it.targetEvidenceId == "place:${place.id}" }
         if (!place.userConfirmed && (effective.userConfirmed || hasUserLabel)) return
         if (place.userConfirmed && place.name != effective.name) correct("place:${place.id}", HistoryField.LABEL, place.name)
+        if (place.userConfirmed && place.radiusMeters != effective.radiusMeters) {
+            correct("place:${place.id}", HistoryField.RADIUS, place.radiusMeters.coerceIn(30.0, 500.0).toString())
+        }
+        if (place.userConfirmed && place.category != effective.category) {
+            correct("place:${place.id}", HistoryField.CATEGORY, place.category.orEmpty())
+        }
         val retained = if (place.userConfirmed) place.copy(name = previous.name) else place
         put(place.id, "place", HistoryPayload.Place(retained))
         placeResolutionCache?.invalidateNear(retained.latitude, retained.longitude)
+    }
+
+    suspend fun mergeVisits(
+        primaryAnchorId: String,
+        secondaryAnchorId: String,
+    ) {
+        if (primaryAnchorId == secondaryAnchorId) return
+        correct(primaryAnchorId, HistoryField.MERGE_WITH, secondaryAnchorId)
+    }
+
+    suspend fun splitVisit(
+        anchorId: String,
+        splitAt: Instant,
+    ) {
+        correct(anchorId, HistoryField.SPLIT_AT, splitAt.toString())
+    }
+
+    suspend fun updatePlaceRadius(
+        placeId: String,
+        radiusMeters: Double,
+    ) {
+        correct("place:$placeId", HistoryField.RADIUS, radiusMeters.coerceIn(30.0, 500.0).toString())
+    }
+
+    suspend fun updatePlaceCategory(
+        placeId: String,
+        category: String?,
+    ) {
+        correct("place:$placeId", HistoryField.CATEGORY, category.orEmpty())
+    }
+
+    fun observeRecordedDaySummaries(
+        first: LocalDate,
+        last: LocalDate,
+        zone: TimeZone = TimeZone.currentSystemDefault(),
+    ): Flow<Map<LocalDate, RecordedDaySummary>> =
+        flow {
+            val ownerId = owner.getCanonicalOwnerId()
+            val localDevice = device.getDeviceId().value.toString()
+            val origin = config.getCurrentBackendUrl().trimEnd('/')
+            val start = first.atStartOfDayIn(zone)
+            val end = last.plus(DatePeriod(days = 1)).atStartOfDayIn(zone)
+            emitAll(
+                combine(
+                    rawHistory.observeLocationHistoryBetween(start, end),
+                    store.observeRange(ownerId, origin, start.toEpochMilliseconds(), end.toEpochMilliseconds()),
+                    notes.observeNotesInRange(start, end),
+                ) { local, _, dayNotes ->
+                    val syncedTimestamps =
+                        store.recordedObservationTimestamps(
+                            ownerId = ownerId,
+                            origin = origin,
+                            startMillis = start.toEpochMilliseconds(),
+                            endMillis = end.toEpochMilliseconds(),
+                        )
+                    val visitDates =
+                        buildSet {
+                            local
+                                .filter { it.userId == ownerId || (it.userId == "default_user" && it.deviceId == localDevice) }
+                                .forEach { add(it.timestamp.toLocalDateTime(zone).date) }
+                            syncedTimestamps.forEach { millis ->
+                                add(Instant.fromEpochMilliseconds(millis).toLocalDateTime(zone).date)
+                            }
+                        }
+                    val memoryDates = dayNotes.mapTo(mutableSetOf()) { it.creationTimestamp.toLocalDateTime(zone).date }
+                    buildMap {
+                        var cursor = first
+                        while (cursor <= last) {
+                            put(
+                                cursor,
+                                RecordedDaySummary(
+                                    date = cursor,
+                                    hasVisits = cursor in visitDates,
+                                    hasMemories = cursor in memoryDates,
+                                ),
+                            )
+                            cursor = cursor.plus(DatePeriod(days = 1))
+                        }
+                    }
+                },
+            )
+        }.flowOn(reconstructionDispatcher)
+
+    suspend fun latestRecordedDate(zone: TimeZone = TimeZone.currentSystemDefault()): LocalDate? {
+        val latestLocation = rawHistory.getLastLocation()?.timestamp
+        val latestNote =
+            notes
+                .observeRecentNotes(1)
+                .first()
+                .firstOrNull()
+                ?.creationTimestamp
+        val latestInstant = listOfNotNull(latestLocation, latestNote).maxOrNull() ?: return null
+        return latestInstant.toLocalDateTime(zone).date
     }
 
     suspend fun correct(
@@ -983,17 +1089,19 @@ private fun applyPlaceLabels(
                 .distinct()
                 .singleOrNull()
                 ?.toDoubleOrNull()
-        val category =
+                ?.coerceIn(30.0, 500.0)
+        val rawCategory =
             placeEdits[HistoryField.CATEGORY]
                 .orEmpty()
                 .map { it.value }
                 .distinct()
                 .singleOrNull()
+        val category = rawCategory?.takeIf { it.isNotBlank() }
         place.copy(
             name = label ?: place.name,
             userConfirmed = place.userConfirmed || label != null,
             radiusMeters = radius ?: place.radiusMeters,
-            category = category ?: place.category,
+            category = if (rawCategory != null) category else place.category,
         )
     }
 }

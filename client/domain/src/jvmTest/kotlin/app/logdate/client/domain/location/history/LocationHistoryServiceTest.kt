@@ -725,6 +725,37 @@ class LocationHistoryServiceTest {
             assertTrue(fixture.snapshot().placeAliases.isEmpty())
         }
 
+    @Test
+    fun radiusAndCategoryEditsPersistAndSummaryUsesIndexedTimestamps() =
+        runTest {
+            val place = SemanticPlace("p1", "Home Base", 36.0, -115.0, userConfirmed = true, radiusMeters = 75.0)
+            val rawItem =
+                LocationHistoryItem(
+                    sampleId = "raw-1",
+                    userId = "owner",
+                    deviceId = phone,
+                    timestamp = start + 2.hours,
+                    loggedAt = start + 2.hours,
+                    location = Location(36.0, -115.0, LocationAltitude(0.0, AltitudeUnit.METERS)),
+                    confidence = 1f,
+                    isGenuine = true,
+                )
+            val noteAtDay = note(start + 3.hours)
+            val fixture = Fixture(notes = listOf(noteAtDay), raw = listOf(rawItem))
+            fixture.service.savePlace(place)
+            fixture.service.updatePlaceRadius("p1", 210.0)
+            fixture.service.updatePlaceCategory("p1", "HOME")
+            val resolvedPlace = fixture.snapshot().places.single()
+            assertEquals(210.0, resolvedPlace.radiusMeters)
+            assertEquals("HOME", resolvedPlace.category)
+
+            val summaries = fixture.service.observeRecordedDaySummaries(date, date, TimeZone.UTC).first()
+            val summary = summaries.getValue(date)
+            assertTrue(summary.hasVisits)
+            assertTrue(summary.hasMemories)
+            assertEquals(date, fixture.service.latestRecordedDate(TimeZone.UTC))
+        }
+
     private fun observation(
         id: String,
         time: Instant,
@@ -878,6 +909,8 @@ class LocationHistoryServiceTest {
                             startTime: Instant,
                             endTime: Instant,
                         ) = raw.filter { it.timestamp >= startTime && it.timestamp < endTime }
+
+                        override suspend fun getLastLocation(): LocationHistoryItem? = raw.maxByOrNull { it.timestamp }
                     },
                 store = store,
                 notes =
@@ -895,6 +928,9 @@ class LocationHistoryServiceTest {
                             requestedRanges += start to end
                             return notesFlow ?: flowOf(notes.filter { it.creationTimestamp >= start && it.creationTimestamp < end })
                         }
+
+                        override fun observeRecentNotes(limit: Int): Flow<List<JournalNote>> =
+                            flowOf(notes.sortedByDescending { it.creationTimestamp }.take(limit))
 
                         override suspend fun getNoteById(noteId: Uuid): JournalNote? {
                             requestedNoteIds += noteId
