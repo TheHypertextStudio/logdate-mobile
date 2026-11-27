@@ -6,8 +6,9 @@ import com.google.android.gms.location.Priority
 /**
  * Defines GPS accuracy and update frequency parameters for a specific movement state.
  *
- * Each profile is tuned for a different activity type (still, walking, driving) to
- * balance location accuracy against battery consumption.
+ * Each profile is tuned for a different activity type (still, walking, cycling, driving, low-power)
+ * to balance location accuracy against battery consumption while allowing indoor Wi-Fi continuity
+ * fixes through `setWaitForAccurateLocation(false)`.
  */
 data class LocationProfile(
     val priority: Int,
@@ -22,7 +23,7 @@ data class LocationProfile(
             .setMinUpdateIntervalMillis(minIntervalMillis)
             .setMinUpdateDistanceMeters(displacementMeters)
             .setMaxUpdateDelayMillis(maxDelayMillis)
-            .setWaitForAccurateLocation(priority == Priority.PRIORITY_HIGH_ACCURACY)
+            .setWaitForAccurateLocation(false)
             .build()
 
     companion object {
@@ -40,20 +41,30 @@ data class LocationProfile(
         val ON_FOOT =
             LocationProfile(
                 priority = Priority.PRIORITY_HIGH_ACCURACY,
-                intervalMillis = 30_000L,
-                minIntervalMillis = 15_000L,
-                displacementMeters = 20f,
-                maxDelayMillis = 60_000L,
+                intervalMillis = 20_000L,
+                minIntervalMillis = 10_000L,
+                displacementMeters = 15f,
+                maxDelayMillis = 45_000L,
             )
 
-        /** High accuracy for vehicle travel — larger displacement threshold. */
+        /** High accuracy tailored for bicycle speeds and corner fidelity. */
+        val CYCLING =
+            LocationProfile(
+                priority = Priority.PRIORITY_HIGH_ACCURACY,
+                intervalMillis = 15_000L,
+                minIntervalMillis = 8_000L,
+                displacementMeters = 25f,
+                maxDelayMillis = 30_000L,
+            )
+
+        /** High accuracy for vehicle travel — rapid interval with larger displacement filter. */
         val IN_VEHICLE =
             LocationProfile(
                 priority = Priority.PRIORITY_HIGH_ACCURACY,
-                intervalMillis = 10_000L,
-                minIntervalMillis = 5_000L,
-                displacementMeters = 50f,
-                maxDelayMillis = 30_000L,
+                intervalMillis = 8_000L,
+                minIntervalMillis = 4_000L,
+                displacementMeters = 40f,
+                maxDelayMillis = 20_000L,
             )
     }
 }

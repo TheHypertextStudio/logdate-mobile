@@ -75,6 +75,9 @@ class OptimizedBackgroundLocationReceiver :
 
     private suspend fun logPassiveLocation(androidLocation: AndroidLocation) {
         if (!settings.getSettings().backgroundTrackingEnabled) return
+        if (!androidLocation.isValidForCapture() || !androidLocation.isFreshForStream(MAX_PASSIVE_FIX_AGE_MS)) {
+            return
+        }
         val observedAt = androidLocation.observedAt(clock.now())
 
         locationTracker
@@ -90,6 +93,10 @@ class OptimizedBackgroundLocationReceiver :
             ).onFailure { error ->
                 Napier.w("Failed to persist passive background location update", error)
             }
+    }
+
+    private companion object {
+        const val MAX_PASSIVE_FIX_AGE_MS = 300_000L
     }
 
     private fun AndroidLocation.toLogDateLocation(): Location =

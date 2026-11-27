@@ -119,6 +119,10 @@ class StandardLocationTracker(
         val timeZoneId = metadata["timeZoneId"] as? String
         val isMock = metadata["isMock"] as? Boolean ?: false
         val loggedAt = metadata["loggedAt"] as? Instant ?: Clock.System.now()
+        val provider = metadata["provider"] as? String
+        val speedAccuracyMetersPerSecond = metadata["speedAccuracyMetersPerSecond"] as? Float
+        val verticalAccuracyMeters = metadata["verticalAccuracyMeters"] as? Float
+        val elapsedRealtimeNanos = metadata["elapsedRealtimeNanos"] as? Long
         return LocationLogRecord(
             userId = ownerId,
             deviceId = deviceId,
@@ -135,6 +139,10 @@ class StandardLocationTracker(
             isMock = isMock,
             activityType = activityType,
             timeZoneId = timeZoneId,
+            provider = provider,
+            speedAccuracyMetersPerSecond = speedAccuracyMetersPerSecond,
+            verticalAccuracyMeters = verticalAccuracyMeters,
+            elapsedRealtimeNanos = elapsedRealtimeNanos,
         )
     }
 
@@ -183,4 +191,8 @@ private fun LocationLogRecord.toHistoryItem(): LocationHistoryItem =
         isMock = isMock,
         activityType = activityType,
         timeZoneId = timeZoneId,
+        provider = provider,
+        speedAccuracyMetersPerSecond = speedAccuracyMetersPerSecond,
+        verticalAccuracyMeters = verticalAccuracyMeters,
+        elapsedRealtimeNanos = elapsedRealtimeNanos,
     )

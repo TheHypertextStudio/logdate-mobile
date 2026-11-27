@@ -22,6 +22,7 @@ class LocationHistoryStager(
     private val store: HistoryRecordStore,
     private val cursors: KeyValueStorage,
     private val deviceId: () -> String,
+    private val locationPageBySequence: (suspend (String, String, Long, String, Int) -> List<LocationHistoryItem>)? = null,
 ) {
     suspend fun stage(
         ownerId: String,
@@ -31,12 +32,16 @@ class LocationHistoryStager(
         var more = false
         for (sourceOwner in listOf(ownerId, "default_user").distinct()) {
             val locationsRemain =
-                stageSource(ownerId, origin, sourceOwner, device, "observation") { cursor ->
-                    locationPage(sourceOwner, device, Instant.fromEpochMilliseconds(cursor.millis), cursor.id, PAGE_SIZE)
-                        .map { item ->
-                            check(item.userId == sourceOwner && item.deviceId == device)
-                            Capture(item.sampleId, item.loggedAt, HistoryPayload.Observation(item.toObservation(ownerId)))
-                        }
+                if (locationPageBySequence != null) {
+                    stageBySequence(ownerId, origin, sourceOwner, device)
+                } else {
+                    stageSource(ownerId, origin, sourceOwner, device, "observation") { cursor ->
+                        locationPage(sourceOwner, device, Instant.fromEpochMilliseconds(cursor.millis), cursor.id, PAGE_SIZE)
+                            .map { item ->
+                                check(item.userId == sourceOwner && item.deviceId == device)
+                                Capture(item.sampleId, item.loggedAt, HistoryPayload.Observation(item.toObservation(ownerId)))
+                            }
+                    }
                 }
             val activitiesRemain =
                 stageSource(ownerId, origin, sourceOwner, device, "activity") { cursor ->
@@ -63,6 +68,48 @@ class LocationHistoryStager(
             more = more || locationsRemain || activitiesRemain
         }
         return more
+    }
+
+    private suspend fun stageBySequence(
+        owner: String,
+        origin: String,
+        sourceOwner: String,
+        device: String,
+    ): Boolean {
+        val pageLoader = locationPageBySequence ?: return false
+        val key = "history.import.v2:${origin.length}:$origin:$owner:$sourceOwner:$device:observation"
+        var cursor = cursors.getString(key)?.let { Json.decodeFromString<SequenceCursor>(it) } ?: SequenceCursor()
+        repeat(PAGES_PER_SOURCE) {
+            val page = pageLoader(sourceOwner, device, cursor.seq, cursor.id, PAGE_SIZE)
+            check(page.size <= PAGE_SIZE)
+            page.forEach { item ->
+                check(item.userId == sourceOwner && item.deviceId == device)
+                val id = "observation:${item.sampleId}"
+                val existing = store.record(owner, origin, id)
+                if (existing?.deleted == true) {
+                    store.put(owner, origin, existing)
+                } else if (existing == null) {
+                    val payload = HistoryPayload.Observation(item.toObservation(owner))
+                    store.put(
+                        owner,
+                        origin,
+                        HistoryRecord(
+                            id,
+                            "observation",
+                            Json.encodeToString<HistoryPayload>(payload),
+                            device,
+                        ),
+                    )
+                }
+            }
+            if (page.isNotEmpty()) {
+                val last = page.last()
+                cursor = SequenceCursor(last.ingestionSeq, last.sampleId)
+                cursors.putString(key, Json.encodeToString(cursor))
+            }
+            if (page.size < PAGE_SIZE) return false
+        }
+        return true
     }
 
     private suspend fun stageSource(
@@ -124,6 +171,12 @@ class LocationHistoryStager(
         val id: String = "",
     )
 
+    @Serializable
+    private data class SequenceCursor(
+        val seq: Long = 0L,
+        val id: String = "",
+    )
+
     private companion object {
         const val PAGE_SIZE = 100
         const val PAGES_PER_SOURCE = 2
@@ -153,4 +206,8 @@ private fun LocationHistoryItem.toObservation(ownerId: String) =
         timeZoneId = timeZoneId,
         source = captureSource.name,
         isMock = isMock,
+        provider = provider,
+        speedAccuracyMetersPerSecond = speedAccuracyMetersPerSecond,
+        verticalAccuracyMeters = verticalAccuracyMeters,
+        elapsedRealtimeNanos = elapsedRealtimeNanos,
     )

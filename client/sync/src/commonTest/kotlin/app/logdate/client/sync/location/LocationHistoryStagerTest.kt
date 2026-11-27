@@ -133,6 +133,62 @@ class LocationHistoryStagerTest {
             assertTrue(record.payload!!.contains(legacyId))
         }
 
+    @Test
+    fun `sequence watermark advances monotonically without rescanning settled history and keeps provenance`() =
+        runTest {
+            val store = MemoryHistoryStore()
+            val cursors = InMemoryKeyValueStorage()
+            store.items += HistoryRecord("observation:sample-2", "observation", null, "device", deleted = true)
+            val rows =
+                (1..5)
+                    .map { seq ->
+                        sample(seq).copy(
+                            ingestionSeq = seq.toLong(),
+                            provider = "fused",
+                            speedAccuracyMetersPerSecond = 0.5f,
+                            verticalAccuracyMeters = 3.0f,
+                            elapsedRealtimeNanos = seq * 1_000_000_000L,
+                        )
+                    }.toMutableList()
+            val seqCalls = mutableListOf<Triple<String, Long, String>>()
+            val stager =
+                LocationHistoryStager(
+                    locationPage = { _, _, _, _, _ -> error("Legacy timestamp loader should not be called") },
+                    activityPage = { _, _, _, _, _ -> emptyList() },
+                    store = store,
+                    cursors = cursors,
+                    deviceId = { "device" },
+                    locationPageBySequence = { owner, device, afterSeq, afterId, limit ->
+                        seqCalls += Triple(owner, afterSeq, afterId)
+                        if (owner != "owner") {
+                            emptyList()
+                        } else {
+                            rows
+                                .filter { it.userId == owner && it.deviceId == device }
+                                .filter { it.ingestionSeq > afterSeq || (it.ingestionSeq == afterSeq && it.sampleId > afterId) }
+                                .sortedWith(compareBy({ it.ingestionSeq }, { it.sampleId }))
+                                .take(limit)
+                        }
+                    },
+                )
+
+            assertFalse(stager.stage("owner", "https://server.test"))
+            assertEquals(5, store.items.size)
+            assertTrue(store.items.first { it.id == "observation:sample-2" }.deleted)
+
+            // Verify provenance fields were preserved in the staged HistoryPayload.Observation.
+            val stagedThree = store.items.first { it.id == "observation:sample-3" }
+            val stagedPayload = stagedThree.payload!!
+            assertTrue(stagedPayload.contains("\"provider\":\"fused\""))
+            assertTrue(stagedPayload.contains("\"speedAccuracyMetersPerSecond\":0.5"))
+
+            // Next sweep must query starting from afterSeq=5, NOT reset to 0.
+            rows += sample(6).copy(ingestionSeq = 6L, loggedAt = Instant.fromEpochMilliseconds(2))
+            assertFalse(stager.stage("owner", "https://server.test"))
+            assertTrue(seqCalls.any { it.first == "owner" && it.second == 5L && it.third == "sample-5" })
+            assertEquals(6, store.items.size)
+        }
+
     private fun sample(index: Int) =
         LocationHistoryItem(
             sampleId = "sample-$index",

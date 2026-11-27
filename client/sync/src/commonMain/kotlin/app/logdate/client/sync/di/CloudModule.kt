@@ -268,6 +268,7 @@ val cloudModule =
                 get(),
                 get(),
                 { device.getDeviceId().value.toString() },
+                locationPageBySequence = locations::getLocationHistoryPageBySequence,
             )
         }
         single {
