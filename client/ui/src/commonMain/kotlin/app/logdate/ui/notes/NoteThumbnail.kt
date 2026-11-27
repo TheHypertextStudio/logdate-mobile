@@ -70,7 +70,8 @@ private val WHITESPACE_RUN = Regex("\\s+")
 /** The words a photo or video note's media is described by for accessibility. */
 @Composable
 fun JournalNote.mediaDescription(): String =
-    remember(this) { noteWords() } ?: stringResource(if (this is JournalNote.Video) Res.string.note_block_video else Res.string.note_block_photo)
+    remember(this) { noteWords() }
+        ?: stringResource(if (this is JournalNote.Video) Res.string.note_block_video else Res.string.note_block_photo)
 
 /**
  * A small square of a note's real content, for list rows and pickers.
