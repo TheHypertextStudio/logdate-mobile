@@ -9,17 +9,17 @@ import app.logdate.client.text.UiText
 import app.logdate.client.text.toUiText
 import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.SemanticPlace
-import app.logdate.util.localTime
 import app.logdate.util.toReadableDateShort
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_around_time
+import logdate.client.feature.location.timeline.generated.resources.history_last_visited_with_count
+import logdate.client.feature.location.timeline.generated.resources.history_latest_memory_date
 import logdate.client.feature.location.timeline.generated.resources.history_location_recorded
-import logdate.client.feature.location.timeline.generated.resources.history_place_last_visited
-import logdate.client.feature.location.timeline.generated.resources.history_place_latest_memory
+import logdate.client.feature.location.timeline.generated.resources.history_place_in_memories
+import logdate.client.feature.location.timeline.generated.resources.history_time_range
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -41,11 +41,29 @@ class HumanHistoryMapperTest {
     fun `a visit spanning days shows both dates rather than implying one day's times`() {
         val end = time + 2.days
         val label =
-            assertIs<UiText.Raw>(
-                PlaceVisit("long-stay", time, end, listOf("anchor"), 36.0, -115.0, true, place).toHistoryUi(emptyList()).timeLabel,
-            ).value
-        assertTrue(label.contains(time.toReadableDateShort()))
-        assertTrue(label.contains(end.toReadableDateShort()))
+            PlaceVisit(
+                "long-stay",
+                time,
+                end,
+                listOf("anchor"),
+                36.0,
+                -115.0,
+                true,
+                place,
+            ).toHistoryUi(emptyList()).timeLabel as UiText.Resource
+        assertEquals(Res.string.history_time_range, label.resource)
+        assertTrue(
+            label.args
+                .first()
+                .toString()
+                .contains(time.toReadableDateShort()),
+        )
+        assertTrue(
+            label.args
+                .last()
+                .toString()
+                .contains(end.toReadableDateShort()),
+        )
     }
 
     @Test
@@ -61,17 +79,19 @@ class HumanHistoryMapperTest {
     @Test
     fun `a geotagged memory supplies a place without claiming a recorded visit`() {
         val result = snapshot(notes = listOf(memory)).placeRows().single()
-        assertEquals("Library", result.title)
-        assertEquals(memory.uid.toString(), result.memories.single().id)
-        assertEquals(listOf(latestMemory()), result.supportingText)
+        assertEquals("Library".toUiText(), result.title)
+        assertEquals(memory.uid, result.memories.single().id)
+        val supporting = result.supportingText as UiText.Joined
+        assertTrue(supporting.parts.any { it is UiText.Resource && it.resource == Res.string.history_latest_memory_date })
+        assertFalse(supporting.parts.any { it is UiText.Plural && it.resource == Res.plurals.history_last_visited_with_count })
     }
 
     @Test
     fun `unlabelled memories remain accessible without coordinate labels`() {
         val note = memory.copy(location = NoteLocation(coordinates = NoteCoordinates(36.0, -115.0)))
         val result = snapshot(notes = listOf(note)).placeRows().single()
-        assertFalse(result.title.contains("36.0"))
-        assertEquals(note.uid.toString(), result.memories.single().id)
+        assertEquals(UiText.Resource(Res.string.history_place_in_memories), result.title)
+        assertEquals(note.uid, result.memories.single().id)
     }
 
     @Test
@@ -79,14 +99,21 @@ class HumanHistoryMapperTest {
         val visits = listOf(visit("morning"), visit("afternoon"))
         val result = snapshot(visits, listOf(memory)).placeRows().single()
         assertEquals(place.id, result.id)
-        assertEquals(listOf(lastVisited(2), latestMemory()), result.supportingText)
+        val supporting = result.supportingText as UiText.Joined
+        val visited =
+            supporting.parts.filterIsInstance<UiText.Plural>().single {
+                it.resource ==
+                    Res.plurals.history_last_visited_with_count
+            }
+        assertEquals(2, visited.quantity)
+        assertTrue(supporting.parts.any { it is UiText.Resource && it.resource == Res.string.history_latest_memory_date })
         assertEquals(1, result.memories.size)
     }
 
     @Test
     fun `explicitly linked memory does not also appear under its older geotag`() {
         val cafe = SemanticPlace("cafe", "Cafe", 36.001, -115.0)
-        val cafeVisit = visit("coffee").copy(place = cafe, memoryIds = listOf(memory.uid.toString()))
+        val cafeVisit = visit("coffee").copy(place = cafe, memoryIds = listOf(memory.uid))
         val rows = snapshot(listOf(visit("library"), cafeVisit), listOf(memory)).placeRows()
         assertEquals(emptyList(), rows.first { it.id == place.id }.memories)
         assertEquals(1, rows.first { it.id == cafe.id }.memories.size)
@@ -100,18 +127,18 @@ class HumanHistoryMapperTest {
                 visit("visit-$index").copy(place = other)
             }
         val cafe = SemanticPlace("cafe", "Cafe", 36.001, -115.0)
-        val cafeVisit = visit("coffee").copy(place = cafe, memoryIds = listOf(memory.uid.toString()))
+        val cafeVisit = visit("coffee").copy(place = cafe, memoryIds = listOf(memory.uid))
         val rows = snapshot(otherVisits + cafeVisit, listOf(memory)).placeRows()
 
         assertEquals(251, rows.size)
-        assertEquals(listOf(memory.uid.toString()), rows.first { it.id == cafe.id }.memories.map { it.id })
+        assertEquals(listOf(memory.uid), rows.first { it.id == cafe.id }.memories.map { it.id })
         assertTrue(rows.filter { it.id != cafe.id }.all { it.memories.isEmpty() })
     }
 
     @Test
     fun `one memory linked to visits at two places remains visible at both`() {
         val cafe = SemanticPlace("cafe", "Cafe", 36.001, -115.0)
-        val linkedId = memory.uid.toString()
+        val linkedId = memory.uid
         val rows =
             snapshot(
                 listOf(
@@ -129,8 +156,9 @@ class HumanHistoryMapperTest {
     fun `sparse evidence is described as a location clue rather than a visit`() {
         val clue = visit("clue").copy(confirmedStay = false, place = null)
         val row = clue.toHistoryUi(emptyList())
-        assertEquals(Res.string.history_location_recorded.toUiText(), row.title)
-        assertEquals(Res.string.history_around_time.toUiText(clue.start.localTime), row.timeLabel)
+        assertEquals(UiText.Resource(Res.string.history_location_recorded), row.title)
+        val timeLabel = row.timeLabel as UiText.Resource
+        assertEquals(Res.string.history_around_time, timeLabel.resource)
         assertTrue(row.isApproximate)
     }
 
@@ -151,7 +179,13 @@ class HumanHistoryMapperTest {
 
         assertEquals(2, rows.size)
         assertEquals(setOf("road-a", "road-b"), rows.first().sourceIds)
-        assertEquals(listOf(lastVisited(2)), rows.first().supportingText)
+        val supporting = rows.first().supportingText as UiText.Joined
+        val visited =
+            supporting.parts.filterIsInstance<UiText.Plural>().single {
+                it.resource ==
+                    Res.plurals.history_last_visited_with_count
+            }
+        assertEquals(2, visited.quantity)
         assertEquals(setOf("road-c"), rows.last().sourceIds)
     }
 
@@ -164,10 +198,6 @@ class HumanHistoryMapperTest {
     }
 
     private fun visit(id: String) = PlaceVisit(id, time, time, listOf(id), 36.0, -115.0, true, place)
-
-    private fun lastVisited(count: Int) = Res.plurals.history_place_last_visited.toUiText(count, time.toReadableDateShort(), count)
-
-    private fun latestMemory() = Res.string.history_place_latest_memory.toUiText(time.toReadableDateShort())
 
     private fun snapshot(
         visits: List<PlaceVisit> = emptyList(),

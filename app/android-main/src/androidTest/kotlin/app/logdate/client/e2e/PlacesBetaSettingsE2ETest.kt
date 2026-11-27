@@ -147,7 +147,7 @@ class PlacesBetaSettingsE2ETest {
                             .filterIsInstance<PlaceVisit>()
                             .single { it.place?.id == place.id }
                     }
-                history.linkMemory(ownedVisit.evidenceIds.first(), memory.uid.toString())
+                history.linkMemory(ownedVisit.evidenceIds.first(), memory.uid)
                 showApp()
                 compose.waitUntil(15_000) { current == HomeRoute }
                 flags.setEnabled(FeatureFlag.PLACES_BETA, true)
@@ -181,7 +181,7 @@ class PlacesBetaSettingsE2ETest {
                     withTimeout(15_000) {
                         history.observeDay(date).first { snapshot ->
                             snapshot.items.filterIsInstance<PlaceVisit>().any {
-                                it.place?.id == place.id && memory.uid.toString() in it.memoryIds
+                                it.place?.id == place.id && memory.uid in it.memoryIds
                             }
                         }
                     }

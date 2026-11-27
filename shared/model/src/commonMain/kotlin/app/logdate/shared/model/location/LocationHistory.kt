@@ -8,6 +8,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 @Serializable
 data class LocationObservation(
@@ -120,7 +121,7 @@ data class PlaceVisit(
     val longitude: Double,
     val confirmedStay: Boolean,
     val place: SemanticPlace? = null,
-    val memoryIds: List<String> = emptyList(),
+    val memoryIds: List<Uuid> = emptyList(),
     val uncertaintyRadiusMeters: Float = 50f,
     val confidence: Float = 1f,
     val sampleCount: Int = 0,

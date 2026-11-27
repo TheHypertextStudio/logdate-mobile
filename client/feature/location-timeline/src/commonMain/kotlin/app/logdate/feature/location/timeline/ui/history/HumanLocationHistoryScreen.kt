@@ -8,14 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,14 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.location.tracking.LocationCaptureStatus
+import app.logdate.client.text.UiText
 import app.logdate.client.text.asString
-import app.logdate.client.text.toUiText
 import app.logdate.shared.model.location.HistoryField
 import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.TravelMode
 import app.logdate.shared.model.location.VisitMemoryContext
 import app.logdate.ui.common.AlertDialog
-import app.logdate.ui.common.DatePickerDialog
 import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.common.PlatformBackHandler
 import kotlinx.datetime.TimeZone
@@ -42,35 +39,36 @@ import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_app_permission_settings
 import logdate.client.feature.location.timeline.generated.resources.history_cancel
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_activity
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_arrival
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_deleted_visit
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_departure
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_place
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_saved_place
-import logdate.client.feature.location.timeline.generated.resources.history_conflict_travelling
-import logdate.client.feature.location.timeline.generated.resources.history_conflicts_body
-import logdate.client.feature.location.timeline.generated.resources.history_conflicts_title
-import logdate.client.feature.location.timeline.generated.resources.history_device_number
+import logdate.client.feature.location.timeline.generated.resources.history_conflicts_dialog_body
+import logdate.client.feature.location.timeline.generated.resources.history_conflicts_dialog_title
+import logdate.client.feature.location.timeline.generated.resources.history_done
+import logdate.client.feature.location.timeline.generated.resources.history_field_activity
+import logdate.client.feature.location.timeline.generated.resources.history_field_arrival
+import logdate.client.feature.location.timeline.generated.resources.history_field_category
+import logdate.client.feature.location.timeline.generated.resources.history_field_deleted_visit
+import logdate.client.feature.location.timeline.generated.resources.history_field_departure
+import logdate.client.feature.location.timeline.generated.resources.history_field_merged_visit
+import logdate.client.feature.location.timeline.generated.resources.history_field_other
+import logdate.client.feature.location.timeline.generated.resources.history_field_place
+import logdate.client.feature.location.timeline.generated.resources.history_field_place_name
+import logdate.client.feature.location.timeline.generated.resources.history_field_radius
+import logdate.client.feature.location.timeline.generated.resources.history_field_split_visit
+import logdate.client.feature.location.timeline.generated.resources.history_field_suggested_place
 import logdate.client.feature.location.timeline.generated.resources.history_link_memory_body
 import logdate.client.feature.location.timeline.generated.resources.history_link_memory_empty
 import logdate.client.feature.location.timeline.generated.resources.history_link_memory_title
-import logdate.client.feature.location.timeline.generated.resources.history_more_place_options
+import logdate.client.feature.location.timeline.generated.resources.history_more_options
 import logdate.client.feature.location.timeline.generated.resources.history_pause_recording
-import logdate.client.feature.location.timeline.generated.resources.history_place_name
-import logdate.client.feature.location.timeline.generated.resources.history_recording_interrupted
+import logdate.client.feature.location.timeline.generated.resources.history_recording_interrupted_banner
 import logdate.client.feature.location.timeline.generated.resources.history_recording_settings
-import logdate.client.feature.location.timeline.generated.resources.history_recording_title
+import logdate.client.feature.location.timeline.generated.resources.history_remember_day_title
 import logdate.client.feature.location.timeline.generated.resources.history_resume_recording
 import logdate.client.feature.location.timeline.generated.resources.history_review_changes
-import logdate.client.feature.location.timeline.generated.resources.history_show_day
+import logdate.client.feature.location.timeline.generated.resources.history_saved_place_fallback
 import logdate.client.feature.location.timeline.generated.resources.history_through_date
-import logdate.client.ui.generated.resources.common_done
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import logdate.client.ui.generated.resources.Res as UiRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,42 +96,45 @@ fun HumanLocationHistoryScreen(
     var openedPlace by rememberSaveable { mutableStateOf<String?>(null) }
     var linkingVisit by remember { mutableStateOf<String?>(null) }
     var moreMenu by remember { mutableStateOf(false) }
+
     Column(modifier) {
         val placeDetail: (@Composable () -> Unit)? =
             openedPlace?.let { placeId ->
                 snapshot?.let { data ->
                     {
                         HumanPlaceDetail(
-                            placeId,
-                            data,
+                            placeId = placeId,
+                            snapshot = data,
                             onVisit = { visit ->
                                 viewModel.setDate(visit.start.toLocalDateTime(TimeZone.currentSystemDefault()).date)
                                 viewModel.select(visit.id, true)
                                 openedPlace = null
                             },
-                            onMemory = { Uuid.parseOrNull(it)?.let(onOpenNote) },
+                            onMemory = onOpenNote,
                             onMerge = viewModel::mergePlace,
                             onDismiss = { openedPlace = null },
+                            onRename = viewModel::updatePlaceName,
+                            onUpdateRadius = viewModel::updatePlaceRadius,
+                            onUpdateCategory = viewModel::updatePlaceCategory,
                         )
                     }
                 }
             }
-        app.logdate.ui.common
-            .PlatformBackHandler(enabled = openedPlace != null) { openedPlace = null }
+        PlatformBackHandler(enabled = openedPlace != null) { openedPlace = null }
         HumanLocationHistoryContent(
             when {
-                state.canRetry -> {
+                state.isRetryRecovery -> {
                     state
                 }
 
                 recordingEnabled && !access.ready -> {
-                    state.copy(recoveryMessage = access.message.toUiText(), recoveryActionLabel = access.actionLabel.toUiText())
+                    state.copy(recoveryMessage = access.message, recoveryActionLabel = access.actionLabel)
                 }
 
                 interrupted -> {
                     state.copy(
-                        recoveryMessage = Res.string.history_recording_interrupted.toUiText(),
-                        recoveryActionLabel = Res.string.history_resume_recording.toUiText(),
+                        recoveryMessage = UiText.Resource(Res.string.history_recording_interrupted_banner),
+                        recoveryActionLabel = UiText.Resource(Res.string.history_resume_recording),
                     )
                 }
 
@@ -146,7 +147,11 @@ fun HumanLocationHistoryScreen(
                 onOpenDetail = { viewModel.select(it, true) },
                 onCloseDetail = viewModel::dismiss,
                 onDayOffset = viewModel::changeDay,
+                onSelectDate = { picked -> viewModel.setDate(picked, state.tab) },
+                onJumpToToday = viewModel::jumpToToday,
                 onCalendar = { calendar = true },
+                onCalendarMonthOffset = viewModel::shiftCalendarMonth,
+                onJumpToLatest = viewModel::jumpToLatestRecordedDay,
                 onTab = {
                     openedPlace = null
                     viewModel.setTab(it)
@@ -154,8 +159,12 @@ fun HumanLocationHistoryScreen(
                 onPlacesQuery = viewModel::setQuery,
                 onPlacesMapVisible = viewModel::setMapVisible,
                 onPlacesFilter = viewModel::cycleRange,
+                onPlacesRangePreset = viewModel::setPlacesRangePreset,
+                onPlacesSort = viewModel::setPlacesSort,
+                onPlacesCategoryFilter = viewModel::setPlacesCategoryFilter,
+                onConfirmPlace = viewModel::confirmPlaceSelection,
                 onOpenPlace = { openedPlace = it },
-                onOpenMemory = { Uuid.parseOrNull(it)?.let(onOpenNote) },
+                onOpenMemory = onOpenNote,
                 onEdit = { id, action ->
                     when {
                         action == HistoryEditAction.AddMemory && id != null -> {
@@ -177,9 +186,11 @@ fun HumanLocationHistoryScreen(
                     }
                 },
                 onReplayPlaying = if (access.reducedMotion) null else viewModel::replay,
+                onReplayScrub = if (access.reducedMotion) null else viewModel::scrubReplay,
+                onReplaySpeed = if (access.reducedMotion) null else viewModel::cycleReplaySpeed,
                 onRecover = {
                     when {
-                        state.canRetry -> viewModel.retry()
+                        state.isRetryRecovery -> viewModel.retry()
                         recordingEnabled && !access.ready -> access.resolve()
                         interrupted -> access.resolve()
                         snapshot?.conflicts?.isNotEmpty() == true -> reviewingChanges = true
@@ -191,7 +202,7 @@ fun HumanLocationHistoryScreen(
             supportingDetail = placeDetail,
             toolbarActions = {
                 IconButton(onClick = { moreMenu = true }) {
-                    Icon(Icons.Default.MoreVert, stringResource(Res.string.history_more_place_options), Modifier.size(20.dp))
+                    Icon(Icons.Default.MoreVert, stringResource(Res.string.history_more_options), Modifier.size(20.dp))
                 }
                 DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
                     DropdownMenuItem(text = { Text(stringResource(Res.string.history_recording_settings)) }, onClick = {
@@ -199,13 +210,11 @@ fun HumanLocationHistoryScreen(
                         recording = true
                     })
                     if (state.tab == HistoryTab.Places) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.history_through_date, state.dateLabel.asString())) },
-                            onClick = {
-                                moreMenu = false
-                                calendar = true
-                            },
-                        )
+                        val dateText = state.dateLabel.asString()
+                        DropdownMenuItem(text = { Text(stringResource(Res.string.history_through_date, dateText)) }, onClick = {
+                            moreMenu = false
+                            calendar = true
+                        })
                     }
                     if (snapshot?.conflicts?.isNotEmpty() == true) {
                         DropdownMenuItem(text = { Text(stringResource(Res.string.history_review_changes)) }, onClick = {
@@ -213,11 +222,14 @@ fun HumanLocationHistoryScreen(
                             reviewingChanges = true
                         })
                     }
-                    snapshot?.recordingDevices?.takeIf { it.size > 1 }?.forEachIndexed { index, device ->
-                        DropdownMenuItem(text = { Text(stringResource(Res.string.history_device_number, index + 1)) }, onClick = {
-                            moreMenu = false
-                            viewModel.selectSource(device)
-                        })
+                    state.recordingDeviceOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.label.asString()) },
+                            onClick = {
+                                moreMenu = false
+                                viewModel.selectSource(option.id)
+                            },
+                        )
                     }
                 }
             },
@@ -247,36 +259,34 @@ fun HumanLocationHistoryScreen(
                         mapSnapshot?.second?.items.orEmpty()
                     }
                 HumanHistoryMap(
-                    mapItems,
-                    if (state.tab == HistoryTab.Places) openedPlace else state.selectedItemId,
-                    {
-                        if (state.tab == HistoryTab.Places) openedPlace = it else viewModel.select(it)
-                    },
-                    mapModifier,
-                    viewModel::pauseReplay,
+                    items = mapItems,
+                    selectedId = if (state.tab == HistoryTab.Places) openedPlace else state.selectedItemId,
+                    onSelect = { if (state.tab == HistoryTab.Places) openedPlace = it else viewModel.select(it) },
+                    modifier = mapModifier,
+                    onInteraction = viewModel::pauseReplay,
                     historyKey = mapSnapshot?.first,
+                    isPlacesCollection = state.tab == HistoryTab.Places,
+                    isToday = state.isToday,
+                    replaySample = if (state.tab == HistoryTab.Day) state.replaySample else null,
+                    fallbackCenter = state.fallbackCoordinate(),
                     showStatus = state.tab != HistoryTab.Places,
                     onReadyChanged = { mapReady = it },
                 )
             },
         )
     }
+
     if (calendar) {
-        val picker = rememberDatePickerState(initialSelectedDateMillis = viewModel.date.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds())
-        DatePickerDialog(onDismissRequest = { calendar = false }, confirmButton = {
-            TextButton(onClick = {
-                picker.selectedDateMillis?.let {
-                    viewModel.setDate(
-                        Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.UTC).date,
-                        state.tab,
-                    )
-                }
-                calendar =
-                    false
-            }) { Text(stringResource(Res.string.history_show_day)) }
-        }, dismissButton = {
-            TextButton(onClick = { calendar = false }) { Text(stringResource(Res.string.history_cancel)) }
-        }) { DatePicker(picker) }
+        HistoryCalendarSheet(
+            monthLabel = state.calendarMonthLabel ?: state.dateLabel,
+            days = state.calendarDays,
+            selectedDate = viewModel.date,
+            latestRecordedDate = state.latestRecordedDate,
+            onSelectDate = { picked -> viewModel.setDate(picked, state.tab) },
+            onMonthOffset = viewModel::shiftCalendarMonth,
+            onJumpToLatest = viewModel::jumpToLatestRecordedDay,
+            onDismiss = { calendar = false },
+        )
     }
     linkingVisit?.let { visitId ->
         val assigned =
@@ -284,9 +294,8 @@ fun HumanLocationHistoryScreen(
                 ?.items
                 .orEmpty()
                 .filterIsInstance<PlaceVisit>()
-                .flatMap { it.memoryIds }
-                .toSet()
-        val available = snapshot?.notes.orEmpty().filterNot { it.uid.toString() in assigned }
+                .flatMapTo(mutableSetOf()) { it.memoryIds }
+        val available = snapshot?.notes.orEmpty().filterNot { it.uid in assigned }
         AlertDialog(
             onDismissRequest = { linkingVisit = null },
             title = { Text(stringResource(Res.string.history_link_memory_title)) },
@@ -296,7 +305,7 @@ fun HumanLocationHistoryScreen(
                     if (available.isEmpty()) Text(stringResource(Res.string.history_link_memory_empty))
                     available.forEach { memory ->
                         TextButton(onClick = {
-                            viewModel.linkMemory(visitId, memory.uid.toString())
+                            viewModel.linkMemory(visitId, memory.uid)
                             linkingVisit = null
                         }) {
                             Text(
@@ -316,10 +325,10 @@ fun HumanLocationHistoryScreen(
     if (recording) {
         AlertDialog(
             onDismissRequest = { recording = false },
-            title = { Text(stringResource(Res.string.history_recording_title)) },
+            title = { Text(stringResource(Res.string.history_remember_day_title)) },
             text = {
                 Column {
-                    Text(stringResource(access.message))
+                    Text(access.message.asString())
                     access.openSettings?.let { open ->
                         TextButton(onClick = open) { Text(stringResource(Res.string.history_app_permission_settings)) }
                     }
@@ -334,7 +343,7 @@ fun HumanLocationHistoryScreen(
                     } else {
                         access.resolve()
                     }
-                }) { Text(stringResource(access.actionLabel)) }
+                }) { Text(access.actionLabel.asString()) }
             },
             dismissButton = {
                 TextButton(onClick = {
@@ -346,64 +355,66 @@ fun HumanLocationHistoryScreen(
     }
     edit?.let { (id, action) ->
         HistoryEditDialog(
-            action,
-            id?.let { key -> snapshot?.items?.firstOrNull { it.id == key } },
-            snapshot?.collectionPlaces().orEmpty(),
-            viewModel,
+            action = action,
+            item = id?.let { key -> snapshot?.items?.firstOrNull { it.id == key } },
+            places = snapshot?.collectionPlaces().orEmpty(),
+            viewModel = viewModel,
+            allItems = snapshot?.items.orEmpty(),
+            fallbackCoordinate = state.fallbackCoordinate(),
             onDismiss = { edit = null },
         )
     }
     if (reviewingChanges) {
         AlertDialog(
             onDismissRequest = { reviewingChanges = false },
-            title = { Text(stringResource(Res.string.history_conflicts_title)) },
+            title = { Text(stringResource(Res.string.history_conflicts_dialog_title)) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text(stringResource(Res.string.history_conflicts_body))
+                    Text(stringResource(Res.string.history_conflicts_dialog_body))
                     snapshot?.conflicts.orEmpty().groupBy { it.targetEvidenceId to it.field }.forEach { (key, edits) ->
-                        Text(
-                            when (key.second) {
-                                HistoryField.PLACE -> stringResource(Res.string.history_conflict_place)
-                                HistoryField.LABEL -> stringResource(Res.string.history_place_name)
-                                HistoryField.ACTIVITY -> stringResource(Res.string.history_conflict_activity)
-                                HistoryField.START -> stringResource(Res.string.history_conflict_arrival)
-                                HistoryField.END -> stringResource(Res.string.history_conflict_departure)
-                                HistoryField.DELETE -> stringResource(Res.string.history_conflict_deleted_visit)
-                                HistoryField.SUGGESTED_PLACE -> "Suggested place"
-                                HistoryField.RADIUS -> "Place radius"
-                                HistoryField.CATEGORY -> "Place category"
-                                HistoryField.MERGE_WITH -> "Merged visit"
-                                HistoryField.SPLIT_AT -> "Split visit"
-                                HistoryField.UNKNOWN -> "Other change"
-                            },
-                        )
-                        edits.distinctBy { it.value }.forEach { edit ->
+                        Text(stringResource(key.second.labelResource()))
+                        edits.distinctBy { it.value }.forEach { conflict ->
                             val label =
-                                when (edit.field) {
+                                when (conflict.field) {
                                     HistoryField.PLACE -> {
-                                        snapshot?.places?.firstOrNull { it.id == edit.value }?.name
-                                            ?: stringResource(Res.string.history_conflict_saved_place)
+                                        snapshot?.places?.firstOrNull { it.id == conflict.value }?.name
+                                            ?: stringResource(Res.string.history_saved_place_fallback)
                                     }
 
                                     HistoryField.ACTIVITY -> {
-                                        stringResource(
-                                            TravelMode.entries.firstOrNull { it.name == edit.value }?.humanName()
-                                                ?: Res.string.history_conflict_travelling,
-                                        )
+                                        (TravelMode.entries.firstOrNull { it.name == conflict.value } ?: TravelMode.UNKNOWN)
+                                            .labelText()
+                                            .asString()
                                     }
 
                                     else -> {
-                                        edit.value
+                                        conflict.value
                                     }
                                 }
-                            TextButton(
-                                onClick = { viewModel.resolveConflict(edit.targetEvidenceId, edit.field, edit.value) },
-                            ) { Text(label) }
+                            TextButton(onClick = { viewModel.resolveConflict(conflict.targetEvidenceId, conflict.field, conflict.value) }) {
+                                Text(label)
+                            }
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { reviewingChanges = false }) { Text(stringResource(UiRes.string.common_done)) } },
+            confirmButton = { TextButton(onClick = { reviewingChanges = false }) { Text(stringResource(Res.string.history_done)) } },
         )
     }
 }
+
+private fun HistoryField.labelResource() =
+    when (this) {
+        HistoryField.PLACE -> Res.string.history_field_place
+        HistoryField.LABEL -> Res.string.history_field_place_name
+        HistoryField.ACTIVITY -> Res.string.history_field_activity
+        HistoryField.START -> Res.string.history_field_arrival
+        HistoryField.END -> Res.string.history_field_departure
+        HistoryField.DELETE -> Res.string.history_field_deleted_visit
+        HistoryField.SUGGESTED_PLACE -> Res.string.history_field_suggested_place
+        HistoryField.RADIUS -> Res.string.history_field_radius
+        HistoryField.CATEGORY -> Res.string.history_field_category
+        HistoryField.MERGE_WITH -> Res.string.history_field_merged_visit
+        HistoryField.SPLIT_AT -> Res.string.history_field_split_visit
+        HistoryField.UNKNOWN -> Res.string.history_field_other
+    }

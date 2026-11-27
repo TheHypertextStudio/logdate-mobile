@@ -24,15 +24,16 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.location.tracking.ActivityAwareLocationService
 import app.logdate.client.location.tracking.LocationTrackingManager
+import app.logdate.client.text.UiText
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_access_activity_action
 import logdate.client.feature.location.timeline.generated.resources.history_access_activity_message
 import logdate.client.feature.location.timeline.generated.resources.history_access_background_action
 import logdate.client.feature.location.timeline.generated.resources.history_access_background_message
-import logdate.client.feature.location.timeline.generated.resources.history_access_location_action
-import logdate.client.feature.location.timeline.generated.resources.history_access_location_message
-import logdate.client.feature.location.timeline.generated.resources.history_access_location_services_action
-import logdate.client.feature.location.timeline.generated.resources.history_access_location_services_message
+import logdate.client.feature.location.timeline.generated.resources.history_access_gps_off_action
+import logdate.client.feature.location.timeline.generated.resources.history_access_gps_off_message
+import logdate.client.feature.location.timeline.generated.resources.history_access_need_location_action
+import logdate.client.feature.location.timeline.generated.resources.history_access_need_location_message
 import logdate.client.feature.location.timeline.generated.resources.history_access_notifications_action
 import logdate.client.feature.location.timeline.generated.resources.history_access_notifications_message
 import logdate.client.feature.location.timeline.generated.resources.history_access_ready_action
@@ -62,21 +63,19 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
             when {
                 !granted(Manifest.permission.ACCESS_FINE_LOCATION) && !granted(Manifest.permission.ACCESS_COARSE_LOCATION) -> {
                     HistoryRecordingAccess(
-                        message = Res.string.history_access_location_message,
-                        actionLabel = Res.string.history_access_location_action,
+                        message = UiText.Resource(Res.string.history_access_need_location_message),
+                        actionLabel = UiText.Resource(Res.string.history_access_need_location_action),
                         reducedMotion = motion,
                         resolve = {
-                            request.launch(
-                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                            )
+                            request.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                         },
                     )
                 }
 
                 context.getSystemService(LocationManager::class.java)?.isLocationEnabled != true -> {
                     HistoryRecordingAccess(
-                        message = Res.string.history_access_location_services_message,
-                        actionLabel = Res.string.history_access_location_services_action,
+                        message = UiText.Resource(Res.string.history_access_gps_off_message),
+                        actionLabel = UiText.Resource(Res.string.history_access_gps_off_action),
                         reducedMotion = motion,
                         resolve = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                     )
@@ -84,8 +83,8 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
 
                 !granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION) -> {
                     HistoryRecordingAccess(
-                        message = Res.string.history_access_background_message,
-                        actionLabel = Res.string.history_access_background_action,
+                        message = UiText.Resource(Res.string.history_access_background_message),
+                        actionLabel = UiText.Resource(Res.string.history_access_background_action),
                         reducedMotion = motion,
                         resolve = settings,
                     )
@@ -93,8 +92,8 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
 
                 !granted(Manifest.permission.ACTIVITY_RECOGNITION) -> {
                     HistoryRecordingAccess(
-                        message = Res.string.history_access_activity_message,
-                        actionLabel = Res.string.history_access_activity_action,
+                        message = UiText.Resource(Res.string.history_access_activity_message),
+                        actionLabel = UiText.Resource(Res.string.history_access_activity_action),
                         reducedMotion = motion,
                         resolve = { request.launch(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)) },
                     )
@@ -102,8 +101,8 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
 
                 Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS) -> {
                     HistoryRecordingAccess(
-                        message = Res.string.history_access_notifications_message,
-                        actionLabel = Res.string.history_access_notifications_action,
+                        message = UiText.Resource(Res.string.history_access_notifications_message),
+                        actionLabel = UiText.Resource(Res.string.history_access_notifications_action),
                         reducedMotion = motion,
                         resolve = { request.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS)) },
                     )
@@ -111,10 +110,10 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
 
                 else -> {
                     HistoryRecordingAccess(
-                        true,
-                        Res.string.history_access_ready_message,
-                        Res.string.history_access_ready_action,
-                        motion,
+                        ready = true,
+                        message = UiText.Resource(Res.string.history_access_ready_message),
+                        actionLabel = UiText.Resource(Res.string.history_access_ready_action),
+                        reducedMotion = motion,
                     )
                 }
             }

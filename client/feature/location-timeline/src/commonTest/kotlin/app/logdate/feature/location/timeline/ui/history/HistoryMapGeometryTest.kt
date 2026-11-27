@@ -14,7 +14,7 @@ class HistoryMapGeometryTest {
     private val start = Instant.parse("2026-09-29T10:00:00Z")
 
     @Test
-    fun `only observed journey evidence becomes a path`() {
+    fun `observed routes and endpoint connectors become styled paths`() {
         val first = PlaceVisit("home", start, start, listOf("home"), 36.0, -115.0, true)
         val gap = HistoryGap("gap", start, start)
         val second = PlaceVisit("cafe", start, start, listOf("cafe"), 36.001, -115.001, true)
@@ -27,18 +27,28 @@ class HistoryMapGeometryTest {
                 TravelMode.WALKING,
                 listOf(point("a", 36.001, -115.001), point("b", 36.002, -115.002)),
             )
+        val connector =
+            JourneyLeg(
+                id = "conn",
+                start = start,
+                end = start,
+                evidenceIds = listOf("derived:journey:home:cafe"),
+                mode = TravelMode.UNKNOWN,
+                route = emptyList(),
+                smoothedRoute = emptyList(),
+                endpointCoordinates = (36.0 to -115.0) to (36.001 to -115.001),
+            )
 
-        val geometry = historyMapGeometry(listOf(first, gap, second, route))
+        val geometry = historyMapGeometry(listOf(first, gap, second, route, connector))
 
         assertEquals(2, geometry.markers.size)
-        assertEquals(1, geometry.paths.size)
-        assertEquals("walk", geometry.paths.single().id)
-        assertEquals(
-            2,
-            geometry.paths
-                .single()
-                .points.size,
-        )
+        assertEquals(listOf(1, 2), geometry.markers.map { it.ordinal })
+        assertEquals(2, geometry.paths.size)
+        assertEquals("walk", geometry.paths[0].id)
+        assertEquals(false, geometry.paths[0].isConnector)
+        assertEquals("conn", geometry.paths[1].id)
+        assertEquals(true, geometry.paths[1].isConnector)
+        assertEquals(2, geometry.paths[1].points.size)
     }
 
     @Test

@@ -7,19 +7,17 @@ import app.logdate.client.domain.location.history.LocationHistoryService
 import app.logdate.client.domain.location.history.LocationHistorySnapshot
 import app.logdate.client.domain.location.history.SuggestNearbyHistoryPlacesUseCase
 import app.logdate.client.domain.places.PlaceResolutionCache
-import app.logdate.client.domain.places.PlaceResolutionResult
 import app.logdate.client.location.settings.LocationCaptureMode
+import app.logdate.client.location.settings.LocationTrackingSettings
 import app.logdate.client.location.settings.LocationTrackingSettingsRepository
-import app.logdate.client.text.toUiText
-import app.logdate.shared.model.AltitudeUnit
-import app.logdate.shared.model.Location
-import app.logdate.shared.model.LocationAltitude
+import app.logdate.client.repository.user.devices.UserDevice
+import app.logdate.client.repository.user.devices.UserDeviceRepository
+import app.logdate.client.text.UiText
 import app.logdate.shared.model.location.HistoryField
 import app.logdate.shared.model.location.LocationDayItem
 import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.shared.model.location.VisitMemoryContext
-import app.logdate.util.toReadableDateShort
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -27,32 +25,27 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.location.timeline.generated.resources.Res
-import logdate.client.feature.location.timeline.generated.resources.history_change_not_saved
-import logdate.client.feature.location.timeline.generated.resources.history_day_summary
-import logdate.client.feature.location.timeline.generated.resources.history_load_failed
 import logdate.client.feature.location.timeline.generated.resources.history_loading_day
-import logdate.client.feature.location.timeline.generated.resources.history_location_clue_count
-import logdate.client.feature.location.timeline.generated.resources.history_range_days
-import logdate.client.feature.location.timeline.generated.resources.history_review_changes
+import logdate.client.feature.location.timeline.generated.resources.history_partial_load_failed
+import logdate.client.feature.location.timeline.generated.resources.history_save_failed
 import logdate.client.feature.location.timeline.generated.resources.history_today
-import logdate.client.feature.location.timeline.generated.resources.history_visit_count
-import logdate.client.ui.generated.resources.common_try_again
+import logdate.client.feature.location.timeline.generated.resources.history_try_again
+import org.jetbrains.compose.resources.StringResource
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import logdate.client.ui.generated.resources.Res as UiRes
 
 class HumanLocationHistoryViewModel(
     private val history: LocationHistoryService,
@@ -60,6 +53,7 @@ class HumanLocationHistoryViewModel(
     private val placeResolution: PlaceResolutionCache,
     private val savedState: SavedStateHandle = SavedStateHandle(),
     private val nearbyPlaces: SuggestNearbyHistoryPlacesUseCase? = null,
+    private val userDevices: UserDeviceRepository? = null,
 ) : ViewModel() {
     private fun currentZone(): TimeZone = TimeZone.currentSystemDefault()
 
@@ -71,21 +65,11 @@ class HumanLocationHistoryViewModel(
                 .date
         private set
 
-    private var observedZoneId: String = currentZone().id
-
-    fun refreshTimeZoneIfChanged() {
-        val activeZone = currentZone()
-        if (activeZone.id != observedZoneId) {
-            observedZoneId = activeZone.id
-            observe()
-        }
-    }
-
     private val mutableState =
         MutableStateFlow(
             HumanLocationHistoryState(
-                Res.string.history_today.toUiText(),
-                recoveryMessage = Res.string.history_loading_day.toUiText(),
+                dateLabel = UiText.Resource(Res.string.history_today),
+                recoveryMessage = UiText.Resource(Res.string.history_loading_day),
                 selectedItemId = savedState["historySelection"],
                 detailVisible = savedState["historyDetail"] ?: false,
                 tab = HistoryTab.entries.firstOrNull { it.name == savedState.get<String>("historyTab") } ?: HistoryTab.Day,
@@ -101,16 +85,19 @@ class HumanLocationHistoryViewModel(
     private val completeDayEnabledState = MutableStateFlow(false)
     val completeDayEnabled: StateFlow<Boolean> = completeDayEnabledState.asStateFlow()
     private var observeJob: Job? = null
-    private var enrichmentJob: Job? = null
     private var replayJob: Job? = null
+    private var replayTimeline: ReplayTimeline = ReplayTimeline(emptyList(), 0.0)
     private var failedAction: (suspend () -> Unit)? = null
     private var rangeDays = 30
     private var selectedSource: String? = savedState["historySource"]
-    private val resolving = mutableSetOf<String>()
-    private val resolvedExternalPlaces = mutableMapOf<String, String>()
+    private var calendarMonth: LocalDate = LocalDate(date.year, date.month, 1)
+    private val placeEnricher = HistoryVisitPlaceEnricher(history, placeResolution, viewModelScope)
+    private val summaryObserver = HistorySummaryObserver(history, viewModelScope, mutableState)
 
     init {
         observe()
+        summaryObserver.observeWeek(date, currentZone())
+        summaryObserver.observeCalendar(calendarMonth, currentZone())
     }
 
     fun select(
@@ -118,14 +105,21 @@ class HumanLocationHistoryViewModel(
         detail: Boolean = false,
     ) {
         pauseReplay()
-        mutableState.update { it.copy(selectedItemId = id, detailVisible = detail, selectionRevision = it.selectionRevision + 1) }
+        val progress = replayTimeline.progressForItem(id)
+        val sample = replayTimeline.sampleAt(progress)
+        val zone = activeDisplayZone()
+        mutableState.update {
+            it.copy(
+                selectedItemId = id,
+                detailVisible = detail,
+                selectionRevision = it.selectionRevision + 1,
+                replayProgress = progress,
+                replaySample = sample,
+                replayTimeLabel = replayTimeDescription(sample, zone),
+            )
+        }
         savedState["historySelection"] = id
-        savedState["historySelectionEvidence"] =
-            snapshot.value
-                ?.items
-                ?.firstOrNull { it.id == id }
-                ?.evidenceIds
-                ?.firstOrNull()
+        savedState["historySelectionEvidence"] = anchor(id)
         savedState["historyDetail"] = detail
     }
 
@@ -142,12 +136,41 @@ class HumanLocationHistoryViewModel(
     ) {
         pauseReplay()
         date = value
+        calendarMonth = LocalDate(value.year, value.month, 1)
         savedState["historyDate"] = value.toString()
         savedState["historySelection"] = null
         savedState["historyDetail"] = false
         savedState["historyTab"] = tab.name
-        mutableState.update { it.copy(selectedItemId = null, detailVisible = false, tab = tab) }
+        mutableState.update { it.copy(selectedItemId = null, detailVisible = false, tab = tab, selectedDate = value) }
         observe()
+        summaryObserver.observeWeek(date, currentZone())
+        summaryObserver.observeCalendar(calendarMonth, currentZone())
+    }
+
+    fun jumpToToday() =
+        setDate(
+            Clock.System
+                .now()
+                .toLocalDateTime(currentZone())
+                .date,
+            HistoryTab.Day,
+        )
+
+    fun shiftCalendarMonth(offsetMonths: Int) {
+        val shifted = calendarMonth.plus(DatePeriod(months = offsetMonths))
+        calendarMonth = LocalDate(shifted.year, shifted.month, 1)
+        summaryObserver.observeCalendar(calendarMonth, currentZone())
+    }
+
+    fun jumpToLatestRecordedDay() {
+        val latest = state.value.latestRecordedDate
+        if (latest != null) {
+            setDate(latest, HistoryTab.Day)
+        } else {
+            viewModelScope.launch {
+                runCatching { history.latestRecordedDate(currentZone()) }.getOrNull()?.let { setDate(it, HistoryTab.Day) }
+            }
+        }
     }
 
     fun setTab(tab: HistoryTab) {
@@ -164,9 +187,53 @@ class HumanLocationHistoryViewModel(
     fun setMapVisible(visible: Boolean) = mutableState.update { it.copy(placesMapVisible = visible) }
 
     fun cycleRange() {
-        rangeDays = if (rangeDays == 30) 90 else 30
+        val presets = PlacesRangePreset.entries
+        val currentIdx = presets.indexOfFirst { it.days == rangeDays }.coerceAtLeast(0)
+        setPlacesRangePreset(presets[(currentIdx + 1) % presets.size])
+    }
+
+    fun setPlacesRangePreset(preset: PlacesRangePreset) {
+        rangeDays = preset.days
+        mutableState.update { it.copy(placesRangePreset = preset, placesFilterLabel = UiText.Resource(preset.labelRes)) }
         observe()
     }
+
+    fun setPlacesSort(sort: PlacesSortOption) = mutableState.update { it.copy(placesSort = sort) }
+
+    fun setPlacesCategoryFilter(category: String?) = mutableState.update { it.copy(placesCategoryFilter = category) }
+
+    fun confirmPlaceSelection(
+        visitId: String,
+        place: SemanticPlace,
+    ) = choosePlace(visitId, place)
+
+    fun mergeVisits(
+        primaryAnchorId: String,
+        secondaryAnchorId: String,
+    ) = mutate { history.mergeVisits(primaryAnchorId, secondaryAnchorId) }
+
+    fun splitVisit(
+        anchorId: String,
+        splitAt: Instant,
+    ) = mutate { history.splitVisit(anchorId, splitAt) }
+
+    fun updatePlaceName(
+        place: SemanticPlace,
+        newName: String,
+    ) = mutate {
+        val trimmed = newName.trim()
+        if (trimmed.isNotEmpty()) history.savePlace(place.copy(name = trimmed, userConfirmed = true))
+    }
+
+    fun updatePlaceRadius(
+        placeId: String,
+        radiusMeters: Double,
+    ) = mutate { history.updatePlaceRadius(placeId, radiusMeters) }
+
+    fun updatePlaceCategory(
+        placeId: String,
+        category: String?,
+    ) = mutate { history.updatePlaceCategory(placeId, category) }
 
     fun selectSource(id: String) {
         selectedSource = id
@@ -176,28 +243,38 @@ class HumanLocationHistoryViewModel(
 
     fun replay(play: Boolean) {
         pauseReplay()
-        if (!play) return
-        if (state.value.selectedItemId ==
+        if (!play || replayTimeline.segments.isEmpty()) return
+        val lastItemId =
             state.value.items
                 .lastOrNull()
                 ?.id
-        ) {
-            mutableState.update { it.copy(selectedItemId = null) }
-        }
-        mutableState.update { it.copy(replayPlaying = true) }
-        replayJob =
-            viewModelScope.launch {
-                do {
-                    val next = if (state.value.selectedItemId == null) state.value.items.firstOrNull() else state.value.adjacentItem(1)
-                    if (next == null) break
-                    mutableState.update {
-                        it.copy(selectedItemId = next.id, detailVisible = false, selectionRevision = it.selectionRevision + 1)
-                    }
-                    delay(2500)
-                } while (state.value.replayPlaying)
-                mutableState.update { it.copy(replayPlaying = false) }
-            }
+        val startProgress =
+            if (state.value.replayProgress >= 0.999f || state.value.selectedItemId == lastItemId) 0f else state.value.replayProgress
+        mutableState.update { it.copy(replayPlaying = true, replayProgress = startProgress) }
+        replayJob = viewModelScope.launch { runReplayLoop(startProgress) }
     }
+
+    private suspend fun runReplayLoop(startProgress: Float) {
+        val frameDelayMs = 33L
+        val baseDurationMs = 20_000f
+        var progress = startProgress
+        val zone = activeDisplayZone()
+        while (state.value.replayPlaying && progress <= 1f) {
+            mutableState.update { applyReplayStep(it, replayTimeline, progress, zone, resetDetail = true) }
+            if (progress >= 1f) break
+            delay(frameDelayMs)
+            progress = (progress + (frameDelayMs.toFloat() / baseDurationMs) * state.value.replaySpeed).coerceAtMost(1f)
+        }
+        mutableState.update { it.copy(replayPlaying = false) }
+    }
+
+    fun scrubReplay(progress: Float) {
+        pauseReplay()
+        val zone = activeDisplayZone()
+        mutableState.update { applyReplayStep(it, replayTimeline, progress, zone) }
+    }
+
+    fun cycleReplaySpeed() = mutableState.update { it.copy(replaySpeed = nextReplaySpeed(it.replaySpeed)) }
 
     fun pauseReplay() {
         replayJob?.cancel()
@@ -225,30 +302,13 @@ class HumanLocationHistoryViewModel(
 
     fun linkMemory(
         visitId: String,
-        noteId: String,
-    ) = mutate {
-        anchor(visitId)?.let { history.linkMemory(it, noteId) }
-    }
+        noteId: Uuid,
+    ) = mutate { anchor(visitId)?.let { history.linkMemory(it, noteId) } }
 
     fun changeActivity(
         id: String,
         mode: String,
     ) = mutate { anchor(id)?.let { history.correct(it, HistoryField.ACTIVITY, mode) } }
-
-    fun namePlace(
-        id: String,
-        name: String,
-    ) = mutate {
-        val visit =
-            snapshot.value
-                ?.items
-                ?.filterIsInstance<PlaceVisit>()
-                ?.firstOrNull { it.id == id } ?: return@mutate
-        val place =
-            SemanticPlace(visit.place?.id ?: Uuid.random().toString(), name.trim(), visit.latitude, visit.longitude, userConfirmed = true)
-        history.savePlace(place)
-        history.correct(visit.evidenceIds.first(), HistoryField.PLACE, place.id)
-    }
 
     fun changeTime(
         id: String,
@@ -279,7 +339,7 @@ class HumanLocationHistoryViewModel(
             mutate(it)
             return
         }
-        resolving.clear()
+        placeEnricher.clearResolving()
         observe()
     }
 
@@ -300,9 +360,7 @@ class HumanLocationHistoryViewModel(
         evidenceId: String,
         field: HistoryField,
         value: String,
-    ) = mutate {
-        history.correct(evidenceId, field, value)
-    }
+    ) = mutate { history.correct(evidenceId, field, value) }
 
     fun pauseRecording() = mutate { settings.setBackgroundTrackingEnabled(false) }
 
@@ -314,7 +372,7 @@ class HumanLocationHistoryViewModel(
             ?.firstOrNull()
 
     private fun mutate(action: suspend () -> Unit) {
-        if (failedAction != null) mutableState.update { it.copy(recoveryMessage = null, recoveryActionLabel = null, canRetry = false) }
+        if (failedAction != null) mutableState.update { it.copy(recoveryMessage = null, recoveryActionLabel = null) }
         failedAction = null
         viewModelScope.launch {
             try {
@@ -324,75 +382,59 @@ class HumanLocationHistoryViewModel(
             } catch (error: Exception) {
                 Napier.w("Location history action failed", error)
                 failedAction = action
-                mutableState.update {
-                    it.copy(
-                        recoveryMessage = Res.string.history_change_not_saved.toUiText(),
-                        recoveryActionLabel = UiRes.string.common_try_again.toUiText(),
-                        canRetry = true,
-                    )
-                }
+                showRetryRecovery(Res.string.history_save_failed)
             }
+        }
+    }
+
+    private fun showRetryRecovery(messageRes: StringResource) {
+        mutableState.update {
+            it.copy(
+                recoveryMessage = UiText.Resource(messageRes),
+                recoveryActionLabel = UiText.Resource(Res.string.history_try_again),
+                isRetryRecovery = true,
+            )
         }
     }
 
     private fun observe() {
         observeJob?.cancel()
-        enrichmentJob?.cancel()
-        resolving.clear()
+        placeEnricher.reset()
         val requestedKey = "$date:${state.value.tab}:$rangeDays:$selectedSource"
         observeJob =
             viewModelScope.launch {
                 try {
                     val first = if (state.value.tab == HistoryTab.Places) date.minus(DatePeriod(days = rangeDays - 1)) else date
                     val zone = currentZone()
-                    observedZoneId = zone.id
-                    combine(history.observeRange(first, date, selectedSource, zone), settings.observeSettings()) { data, tracking ->
-                        data to
-                            tracking
-                    }.collect { (data, tracking) ->
+                    val devicesFlow = userDevices?.allDevices?.catch { emit(emptyList()) } ?: flowOf(emptyList())
+                    combine(
+                        history.observeRange(first, date, selectedSource, zone),
+                        settings.observeSettings(),
+                        devicesFlow,
+                    ) { data, tracking, knownDevices ->
+                        Triple(data, tracking, knownDevices)
+                    }.collect { (data, tracking, knownDevices) ->
                         mapSnapshotState.value = requestedKey to data
-                        applySnapshot(data, tracking)
-                        enrich(data)
+                        applySnapshot(data, tracking, knownDevices)
+                        if (state.value.tab == HistoryTab.Day) placeEnricher.enqueue(data, currentZone())
                     }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
                     Napier.w("Could not read location history", error)
-                    mutableState.update {
-                        it.copy(
-                            recoveryMessage = Res.string.history_load_failed.toUiText(),
-                            recoveryActionLabel = UiRes.string.common_try_again.toUiText(),
-                            canRetry = true,
-                        )
-                    }
+                    showRetryRecovery(Res.string.history_partial_load_failed)
                 }
             }
     }
 
-    private fun selectedDateLabel(): String {
-        val zone =
-            snapshot.value
-                ?.effectiveZoneId
-                ?.let { runCatching { TimeZone.of(it) }.getOrNull() }
-                ?: currentZone()
-        val label = date.atStartOfDayIn(zone).toReadableDateShort()
-        return if (date.year ==
-            Clock.System
-                .now()
-                .toLocalDateTime(zone)
-                .year
-        ) {
-            label
-        } else {
-            "$label, ${date.year}"
-        }
-    }
+    private fun activeDisplayZone(): TimeZone =
+        snapshot.value?.effectiveZoneId?.let { runCatching { TimeZone.of(it) }.getOrNull() } ?: currentZone()
 
     private fun applySnapshot(
         data: LocationHistorySnapshot,
-        tracking: app.logdate.client.location.settings.LocationTrackingSettings,
+        tracking: LocationTrackingSettings,
+        knownDevices: List<UserDevice> = emptyList(),
     ) {
-        val notesById = data.notes.associateBy { it.uid.toString() }
         val selection =
             remapHistorySelection(
                 state.value.selectedItemId,
@@ -401,140 +443,25 @@ class HumanLocationHistoryViewModel(
                 savedState["historySelectionEvidence"],
             )
         snapshotState.value = data
+        replayTimeline = buildReplayTimeline(data.items)
         savedState["historySelection"] = selection
         recordingEnabledState.value = tracking.backgroundTrackingEnabled
         completeDayEnabledState.value = tracking.backgroundTrackingEnabled && tracking.captureMode == LocationCaptureMode.ACTIVE
+        val activeZone = activeDisplayZone()
         mutableState.update { current ->
-            current.copy(
-                selectedItemId = selection,
-                detailVisible = current.detailVisible && selection != null,
-                dateLabel = selectedDateLabel().toUiText(),
-                daySummary =
-                    data.items.filterIsInstance<PlaceVisit>().let { visits ->
-                        val confirmed = visits.count { it.confirmedStay }
-                        val clues = visits.size - confirmed
-                        val visitCount = Res.plurals.history_visit_count.toUiText(confirmed, confirmed)
-                        if (clues > 0) {
-                            val clueCount = Res.plurals.history_location_clue_count.toUiText(clues, clues)
-                            Res.string.history_day_summary.toUiText(visitCount, clueCount)
-                        } else {
-                            visitCount
-                        }
-                    },
-                items =
-                    data.items.map { item ->
-                        item.toHistoryUi(
-                            if (item is PlaceVisit) item.memoryIds.mapNotNull(notesById::get) else emptyList(),
-                        )
-                    },
-                places = data.placeRows(),
-                placesFilterLabel = Res.plurals.history_range_days.toUiText(rangeDays, rangeDays),
-                recoveryActionLabel =
-                    when {
-                        failedAction != null -> UiRes.string.common_try_again.toUiText()
-                        data.failedSections.isNotEmpty() -> UiRes.string.common_try_again.toUiText()
-                        data.conflicts.isNotEmpty() -> Res.string.history_review_changes.toUiText()
-                        else -> null
-                    },
-                canRetry = failedAction != null || data.failedSections.isNotEmpty(),
-                recoveryMessage = snapshotRecoveryMessage(data, tracking, hasFailedAction = failedAction != null),
+            mapSnapshotToUiState(
+                current,
+                data,
+                tracking,
+                knownDevices,
+                date,
+                activeZone,
+                currentZone(),
+                rangeDays,
+                selection,
+                replayTimeline,
+                failedAction != null,
             )
         }
-    }
-
-    private fun enrich(data: LocationHistorySnapshot) {
-        if (state.value.tab != HistoryTab.Day) return
-        data.places.forEach { place -> place.externalId?.let { resolvedExternalPlaces.getOrPut(it) { place.id } } }
-        val unresolved = data.items.filterIsInstance<PlaceVisit>().filter { it.place == null && resolving.add(it.id) }
-        if (unresolved.isEmpty()) return
-        enrichmentJob =
-            viewModelScope.launch {
-                val activeZone = currentZone()
-                unresolved.forEach { visit ->
-                    try {
-                        val dwell = visit.end - visit.start
-                        val searchRadius = (visit.uncertaintyRadiusMeters * 1.5).coerceIn(60.0, 120.0)
-                        val visitZone =
-                            visit.displayZoneId?.let { runCatching { TimeZone.of(it) }.getOrNull() }
-                                ?: activeZone
-                        val overnight = dwell >= 5.hours && overlapsOvernightWindow(visit.start, visit.end, visitZone)
-                        val result =
-                            placeResolution.resolveWithContext(
-                                location = Location(visit.latitude, visit.longitude, LocationAltitude(0.0, AltitudeUnit.METERS)),
-                                searchRadiusMeters = searchRadius,
-                                dwellDuration = dwell,
-                                isOvernightResidential = overnight,
-                            )
-                        if (result is PlaceResolutionResult.UserDefinedPlace && data.places.any { it.id == result.place.uid.toString() }) {
-                            return@forEach
-                        }
-                        resolvedPlace(result, visit)?.let { place ->
-                            history.savePlace(place)
-                            if (result !is PlaceResolutionResult.UserDefinedPlace && visit.evidenceIds.isNotEmpty()) {
-                                history.correct(visit.evidenceIds.first(), HistoryField.SUGGESTED_PLACE, place.id)
-                            }
-                        }
-                    } catch (cancelled: CancellationException) {
-                        throw cancelled
-                    } catch (error: Exception) {
-                        Napier.w("Place name unavailable; keeping the visit", error)
-                    }
-                }
-            }
-    }
-
-    private fun overlapsOvernightWindow(
-        start: Instant,
-        end: Instant,
-        zone: TimeZone,
-    ): Boolean {
-        val localStart = start.toLocalDateTime(zone)
-        val localEnd = end.toLocalDateTime(zone)
-        return localStart.hour in 0..4 ||
-            localEnd.hour in 0..4 ||
-            (localStart.date != localEnd.date && localEnd.hour >= 0)
-    }
-
-    private suspend fun resolvedPlace(
-        result: PlaceResolutionResult,
-        visit: PlaceVisit,
-    ): SemanticPlace? {
-        val name = resolvedHistoryPlaceName(result)
-        if (name != null) {
-            val place =
-                when (result) {
-                    is PlaceResolutionResult.UserDefinedPlace -> {
-                        SemanticPlace(
-                            result.place.uid.toString(),
-                            result.place.name,
-                            result.place.latitude,
-                            result.place.longitude,
-                            userConfirmed = true,
-                        )
-                    }
-
-                    is PlaceResolutionResult.ExternalSuggestion -> {
-                        SemanticPlace(
-                            result.suggestion.externalId?.let {
-                                resolvedExternalPlaces.getOrPut(
-                                    it,
-                                ) { Uuid.random().toString() }
-                            }
-                                ?: "evidence:${visit.evidenceIds.first()}",
-                            name,
-                            result.suggestion.latitude,
-                            result.suggestion.longitude,
-                            locality = result.suggestion.address,
-                            externalId = result.suggestion.externalId,
-                        )
-                    }
-
-                    else -> {
-                        SemanticPlace("evidence:${visit.evidenceIds.first()}", name, visit.latitude, visit.longitude)
-                    }
-                }
-            return place
-        }
-        return null
     }
 }

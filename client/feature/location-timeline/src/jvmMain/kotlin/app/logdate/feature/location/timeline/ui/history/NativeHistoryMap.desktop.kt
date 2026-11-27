@@ -20,6 +20,10 @@ internal actual fun NativeHistoryMap(
     modifier: Modifier,
     onInteraction: () -> Unit,
     historyKey: String?,
+    isPlacesCollection: Boolean,
+    isToday: Boolean,
+    replaySample: ReplaySample?,
+    fallbackCenter: HistoryCoordinate?,
     showStatus: Boolean,
     onReadyChanged: (Boolean) -> Unit,
 ) {

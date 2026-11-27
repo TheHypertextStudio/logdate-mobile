@@ -28,7 +28,24 @@ import app.logdate.client.sync.crypto.MediaPayloadKeyProvider
 import app.logdate.client.sync.crypto.SyncPayloadCipher
 import app.logdate.integration.e2e.fixtures.createAccountWithSyntheticPasskey
 import app.logdate.integration.e2e.fixtures.uploadMedia
+import app.logdate.shared.model.location.HistoryField
+import app.logdate.shared.model.location.HistoryPayload
+import app.logdate.shared.model.location.LocationObservation
+import app.logdate.shared.model.location.SemanticPlace
+import app.logdate.shared.model.location.TravelMode
+import app.logdate.shared.model.sync.LocationHistoryBatchRequest
+import app.logdate.shared.model.sync.LocationHistoryChangesResponse
+import app.logdate.shared.model.sync.LocationHistoryUpload
 import com.sun.net.httpserver.HttpServer
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +54,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.buffered
 import kotlinx.io.readByteArray
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -54,6 +73,7 @@ import javax.imageio.ImageIO
 import javax.sound.sampled.AudioSystem
 import kotlin.random.Random
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 /** Disposable loopback journal for headless and signed-app native acceptance. */
@@ -231,6 +251,78 @@ object NativeJournalSyncHarness {
                     content.uploadNote(token, imported.copy(mediaRef = upload.mediaId)).getOrThrow()
                     Files.writeString(control.resolve("speech-import-id"), imported.uid.toString())
                 }
+                val historyJson =
+                    Json {
+                        ignoreUnknownKeys = true
+                        encodeDefaults = true
+                    }
+                val historyOrigin = baseUrl.removeSuffix("/api/v1").trimEnd('/')
+                val historyPlaceId = "harness-place-cafe"
+                val seededPlace =
+                    SemanticPlace(
+                        id = historyPlaceId,
+                        name = "Kotlin Cedar Cafe",
+                        latitude = 37.7749,
+                        longitude = -122.4194,
+                        userConfirmed = true,
+                        radiusMeters = 45.0,
+                    )
+                val historyBaseTs = now - 10.minutes
+                val historyUploads =
+                    buildList {
+                        val placePayload =
+                            historyJson.encodeToString(HistoryPayload.serializer(), HistoryPayload.Place(seededPlace))
+                        add(
+                            LocationHistoryUpload(
+                                id = seededPlace.id,
+                                recordType = "place",
+                                payload =
+                                    cipher.encryptString(
+                                        "location-history:$historyOrigin:${account.account.id}:place:${seededPlace.id}:v1",
+                                        placePayload,
+                                    ),
+                                deviceId = "android-harness",
+                                deviceVersion = 1L,
+                            ),
+                        )
+                        for (step in 0..3) {
+                            val obsId = "harness-obs-$step"
+                            val obs =
+                                LocationObservation(
+                                    id = obsId,
+                                    ownerId = account.account.id.toString(),
+                                    deviceId = "android-harness",
+                                    timestamp = historyBaseTs + (step * 3).minutes,
+                                    latitude = 37.7749,
+                                    longitude = -122.4194,
+                                    accuracyMeters = 12f,
+                                    activity = TravelMode.STILL,
+                                    timeZoneId = "UTC",
+                                )
+                            val obsPayload =
+                                historyJson.encodeToString(HistoryPayload.serializer(), HistoryPayload.Observation(obs))
+                            add(
+                                LocationHistoryUpload(
+                                    id = "observation:$obsId",
+                                    recordType = "observation",
+                                    payload =
+                                        cipher.encryptString(
+                                            "location-history:$historyOrigin:${account.account.id}:observation:observation:$obsId:v1",
+                                            obsPayload,
+                                        ),
+                                    deviceId = "android-harness",
+                                    deviceVersion = (step + 1).toLong(),
+                                ),
+                            )
+                        }
+                    }
+                val historySeedResp =
+                    httpClient.put("$baseUrl/location-history") {
+                        bearerAuth(token)
+                        contentType(ContentType.Application.Json)
+                        setBody(historyJson.encodeToString(LocationHistoryBatchRequest(historyUploads)))
+                    }
+                check(historySeedResp.status.isSuccess()) { "Failed to seed encrypted location history (${historySeedResp.status})" }
                 val fixture =
                     buildJsonObject {
                         put("owner", account.account.id.toString())
@@ -243,6 +335,8 @@ object NativeJournalSyncHarness {
                         put("audio", audioEntry.uid.toString())
                         put("photo", photoEntry.uid.toString())
                         put("photoHash", Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(photo)))
+                        put("placeId", historyPlaceId)
+                        put("placeTimestampMs", historyBaseTs.toEpochMilliseconds())
                     }.toString().toByteArray()
                 val fixtureServer = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
                 fixtureServer.createContext("/fixture") { exchange ->
@@ -374,9 +468,35 @@ object NativeJournalSyncHarness {
                             ?.label == "Speaker 1",
                     )
                     check(roundTripAudio.caption == "Older client caption")
+                    val historyPullResp =
+                        httpClient.get("$baseUrl/location-history") {
+                            bearerAuth(token)
+                            parameter("since", 0)
+                            parameter("limit", 100)
+                        }
+                    check(historyPullResp.status.isSuccess()) { "Kotlin failed to pull location history edits" }
+                    val historyChanges = historyJson.decodeFromString<LocationHistoryChangesResponse>(historyPullResp.bodyAsText())
+                    val decryptedHistoryPayloads =
+                        historyChanges.records.filter { !it.deleted && it.payload != null }.map { rec ->
+                            val plain =
+                                cipher.decryptString(
+                                    "location-history:$historyOrigin:${account.account.id}:${rec.recordType}:${rec.id}:v1",
+                                    rec.payload!!,
+                                )
+                            historyJson.decodeFromString(HistoryPayload.serializer(), plain)
+                        }
+                    val renamedCorrection =
+                        decryptedHistoryPayloads
+                            .filterIsInstance<HistoryPayload.Correction>()
+                            .any { correction ->
+                                correction.value.targetEvidenceId == "place:$historyPlaceId" &&
+                                    correction.value.field == HistoryField.LABEL &&
+                                    correction.value.value == "Mac Renamed Cafe"
+                            }
+                    check(renamedCorrection) { "Kotlin did not decrypt Mac's SemanticPlace LABEL correction" }
                     Files.writeString(
                         control.resolve("verified"),
-                        "Kotlin observed the Mac device and decrypted the resolved conflict and new offline entry.\n",
+                        "Kotlin observed the Mac device and decrypted the resolved conflict, location history edit, and new offline entry.\n",
                     )
                 } finally {
                     fixtureServer.stop(0)

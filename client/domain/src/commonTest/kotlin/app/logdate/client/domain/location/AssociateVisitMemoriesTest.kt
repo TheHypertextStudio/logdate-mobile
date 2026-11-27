@@ -29,7 +29,7 @@ class AssociateVisitMemoriesTest {
     fun `a morning memory does not appear on the afternoon return`() {
         val afternoon = visit.copy(id = "afternoon", start = start + 4.hours, end = start + 5.hours, evidenceIds = listOf("b"))
         val result = AssociateVisitMemories()(listOf(visit, afternoon), listOf(note), emptyList())
-        assertEquals(listOf(note.uid.toString()), result.first().memoryIds)
+        assertEquals(listOf(note.uid), result.first().memoryIds)
         assertEquals(emptyList(), result.last().memoryIds)
     }
 
@@ -37,7 +37,7 @@ class AssociateVisitMemoriesTest {
     fun `explicit retrospective link overrides creation time without changing note`() {
         val laterNote = note.copy(creationTimestamp = start + 5.hours, location = null)
         val result = AssociateVisitMemories()(listOf(visit), listOf(laterNote), listOf(VisitMemoryLink(note.uid.toString(), "a")))
-        assertEquals(listOf(note.uid.toString()), result.single().memoryIds)
+        assertEquals(listOf(note.uid), result.single().memoryIds)
         assertEquals(start + 5.hours, laterNote.creationTimestamp)
     }
 
@@ -63,7 +63,7 @@ class AssociateVisitMemoriesTest {
                 location = NoteLocation(coordinates = NoteCoordinates(36.00085, -115.0)),
             )
         val result = AssociateVisitMemories()(listOf(wideVisit), listOf(edgeNote), emptyList())
-        assertEquals(listOf(edgeNote.uid.toString()), result.single().memoryIds)
+        assertEquals(listOf(edgeNote.uid), result.single().memoryIds)
     }
 
     @Test
@@ -72,6 +72,6 @@ class AssociateVisitMemoriesTest {
         val strictlyInsideNote = note.copy(creationTimestamp = start + 2.minutes)
         val result = AssociateVisitMemories()(listOf(earlier, visit), listOf(strictlyInsideNote), emptyList())
         assertEquals(emptyList(), result.first().memoryIds)
-        assertEquals(listOf(strictlyInsideNote.uid.toString()), result.last().memoryIds)
+        assertEquals(listOf(strictlyInsideNote.uid), result.last().memoryIds)
     }
 }

@@ -7,7 +7,6 @@ import app.logdate.client.domain.location.GetLocationHistoryUseCase
 import app.logdate.client.domain.location.LocationRetryWorker
 import app.logdate.client.domain.location.LogCurrentLocationUseCase
 import app.logdate.client.domain.location.ObserveLocationHistoryUseCase
-import app.logdate.client.domain.location.ObserveLocationMemoryPlacesUseCase
 import app.logdate.client.domain.location.ObserveLocationRetryStatusUseCase
 import app.logdate.client.domain.location.ObserveLocationStopsUseCase
 import app.logdate.client.domain.location.history.LocationHistoryService
@@ -43,7 +42,6 @@ val locationDomainModule: Module =
         factory { DeleteLocationRangeUseCase(get()) }
         factory { ObserveLocationHistoryUseCase(get()) }
         factory { ObserveLocationStopsUseCase(get()) }
-        factory { ObserveLocationMemoryPlacesUseCase(get()) }
 
         // World
         factory { GetLocationUseCase(get()) }
