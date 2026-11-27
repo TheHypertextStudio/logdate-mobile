@@ -7,6 +7,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -17,6 +19,7 @@ import app.logdate.feature.editor.ui.editor.EntryEditorViewModel
 import app.logdate.shared.model.location.VisitMemoryContext
 import app.logdate.ui.LocalSharedTransitionScope
 import app.logdate.ui.creation.EntryCreationShape
+import app.logdate.ui.creation.LocalEntryCreationOpening
 import app.logdate.ui.creation.LocalEntryCreationProgress
 import app.logdate.ui.creation.entryCreationBounds
 import app.logdate.ui.creation.rememberEntryCreationVisibilityProgress
@@ -78,6 +81,8 @@ fun EntryProviderScope<NavKey>.editorEntry(
         val navigationScope = LocalSharedTransitionScope.current
         val animatedContentScope = LocalNavAnimatedContentScope.current
         val creationProgress = if (route.creationTransitionId == null) 1f else rememberEntryCreationVisibilityProgress()
+        val currentCreationProgress = rememberUpdatedState(creationProgress)
+        val opening = remember { { currentCreationProgress.value < 1f } }
         val sharedBoundsModifier =
             Modifier.entryCreationBounds(
                 route.creationTransitionId,
@@ -87,6 +92,7 @@ fun EntryProviderScope<NavKey>.editorEntry(
 
         CompositionLocalProvider(
             LocalEntryCreationProgress provides creationProgress,
+            LocalEntryCreationOpening provides opening,
             EditorLocalSharedTransitionScope provides navigationScope,
             EditorLocalAnimatedVisibilityScope provides animatedContentScope,
         ) {

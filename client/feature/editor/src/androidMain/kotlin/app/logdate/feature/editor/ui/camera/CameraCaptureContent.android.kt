@@ -839,6 +839,7 @@ private fun InlineCameraCapture(
                         view.scaleType = PreviewView.ScaleType.FILL_CENTER
                     },
                 )
+                CameraPreviewRevealCover(streaming = previewStreaming)
 
                 currentFocusPoint?.let { point ->
                     Canvas(modifier = Modifier.fillMaxSize()) {

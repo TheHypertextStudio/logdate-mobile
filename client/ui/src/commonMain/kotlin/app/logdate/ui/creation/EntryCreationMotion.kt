@@ -17,6 +17,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
@@ -30,6 +31,12 @@ import app.logdate.ui.LocalSharedTransitionScope
 import app.logdate.ui.platform.rememberSystemReduceMotion
 
 val LocalEntryCreationProgress = compositionLocalOf { 1f }
+
+/**
+ * Whether the entry is still growing out of the create button. A lambda, so content that only
+ * needs to ask at one moment does not recompose on every frame of the opening.
+ */
+val LocalEntryCreationOpening = staticCompositionLocalOf<() -> Boolean> { { false } }
 
 /**
  * Material 3 Expressive spring values. The app theme keeps the standard motion scheme for

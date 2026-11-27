@@ -281,4 +281,44 @@ class RetainedEditorFocusMotionTest {
             assertEquals(1f, motion.surfaceProgress, 0.001f)
             mainClock.autoAdvance = true
         }
+
+    @Test(timeout = 60_000)
+    fun aMemoryArrivingWhileTheEntryOpensLandsInFocusWithoutASecondMotion() = firstMemoryArrives(opening = true)
+
+    @Test(timeout = 60_000)
+    fun aMemoryAddedToAnOpenEntryStillGrowsIntoFocus() = firstMemoryArrives(opening = false)
+
+    private fun firstMemoryArrives(opening: Boolean) =
+        runDesktopComposeUiTest {
+            val id = Uuid.random()
+            var focused by mutableStateOf<Uuid?>(null)
+            lateinit var motion: RetainedEditorFocusMotion
+            setContent {
+                motion =
+                    rememberRetainedEditorFocusMotion(
+                        focused,
+                        setOfNotNull(focused),
+                        false,
+                        onDismiss = { true },
+                        onPrepare = {},
+                        onProgress = {},
+                        onCommit = {},
+                        onCancel = {},
+                        settleArrivingFocus = { opening },
+                    )
+                Text("The preferred memory arrives after the entry")
+            }
+            waitForIdle()
+            mainClock.autoAdvance = false
+            runOnIdle { focused = id }
+            mainClock.advanceTimeBy(16)
+            if (opening) {
+                assertEquals(1f, motion.surfaceProgress, 0.001f, "The opening motion already carries the memory into focus")
+            } else {
+                assertTrue(motion.surfaceProgress < 0.5f, "A memory added later grows from its place")
+            }
+            repeat(60) { mainClock.advanceTimeBy(16) }
+            assertEquals(1f, motion.surfaceProgress, 0.001f)
+            mainClock.autoAdvance = true
+        }
 }
