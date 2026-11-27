@@ -60,4 +60,55 @@ class ApplyHistoryEditsTest {
         val result = ApplyHistoryEdits()(listOf(home, connector, work), listOf(oldDelete), emptyList())
         assertEquals(listOf("home", "work"), result.map { it.id })
     }
+
+    @Test
+    fun `merge combines two adjacent visits and drops any connecting leg`() {
+        val cafe = SemanticPlace("cafe", "Cedar Coffee", 36.0, -115.0, userConfirmed = true)
+        val first = PlaceVisit("v1", start, start + 30.minutes, listOf("s1", "s2"), 36.0, -115.0, true, memoryIds = listOf("m1"))
+        val connector =
+            JourneyLeg(
+                id = "j1",
+                start = start + 30.minutes,
+                end = start + 32.minutes,
+                evidenceIds = listOf("derived:journey:o:d:s2:s3"),
+                mode = TravelMode.WALKING,
+                route = emptyList(),
+            )
+        val second =
+            PlaceVisit(
+                id = "v2",
+                start = start + 32.minutes,
+                end = start + 1.hours,
+                evidenceIds = listOf("s3"),
+                latitude = 36.0,
+                longitude = -115.0,
+                confirmedStay = true,
+                place = cafe,
+                memoryIds = listOf("m2"),
+            )
+        val merge = HistoryCorrection("m", "s1", HistoryField.MERGE_WITH, "s3")
+        val result = ApplyHistoryEdits()(listOf(first, connector, second), listOf(merge), listOf(cafe))
+        val merged = result.single() as PlaceVisit
+        assertEquals(start, merged.start)
+        assertEquals(start + 1.hours, merged.end)
+        assertEquals(listOf("s1", "s2", "s3"), merged.evidenceIds)
+        assertEquals(listOf("m1", "m2"), merged.memoryIds)
+        assertEquals("cafe", merged.place?.id)
+    }
+
+    @Test
+    fun `split divides a visit into two independently editable halves`() {
+        val longVisit = PlaceVisit("v1", start, start + 2.hours, listOf("s1"), 36.0, -115.0, true, memoryIds = listOf("m1"))
+        val splitAt = start + 1.hours
+        val split = HistoryCorrection("sp", "s1", HistoryField.SPLIT_AT, splitAt.toString())
+        val work = SemanticPlace("work", "Office", 36.0, -115.0, userConfirmed = true)
+        val renamePart2 = HistoryCorrection("ren", "derived:split:s1:$splitAt", HistoryField.PLACE, "work")
+        val parts = ApplyHistoryEdits()(listOf(longVisit), listOf(split, renamePart2), listOf(work)).filterIsInstance<PlaceVisit>()
+        assertEquals(2, parts.size)
+        assertEquals(start, parts[0].start)
+        assertEquals(splitAt, parts[0].end)
+        assertEquals(splitAt, parts[1].start)
+        assertEquals(start + 2.hours, parts[1].end)
+        assertEquals("Office", parts[1].place?.name)
+    }
 }
