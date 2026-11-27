@@ -32,6 +32,7 @@ import app.logdate.client.data.people.AndroidDeviceContactsReader
 import app.logdate.client.data.people.OfflineFirstPeopleGraphRepository
 import app.logdate.client.data.people.OfflineFirstPeopleRepository
 import app.logdate.client.data.places.OfflineFirstUserPlacesRepository
+import app.logdate.client.data.places.RoomPlaceResolutionCacheStore
 import app.logdate.client.data.postcards.OfflineFirstPostcardRepository
 import app.logdate.client.data.profile.OfflineFirstProfileRepository
 import app.logdate.client.data.quota.AndroidRemoteQuotaDataSource
@@ -57,6 +58,7 @@ import app.logdate.client.device.crypto.AccountKeyEnvelopeCipher
 import app.logdate.client.device.di.deviceInstanceModule
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.client.di.datastoreModule
+import app.logdate.client.domain.places.PlaceResolutionCacheStore
 import app.logdate.client.media.MediaManager
 import app.logdate.client.media.storage.MediaClaimFence
 import app.logdate.client.media.storage.MediaOwnerCensus
@@ -325,6 +327,7 @@ actual val dataModule: Module =
         single<app.logdate.client.repository.moments.SyncableMarkedMomentRepository> {
             get<MarkedMomentRepository>() as app.logdate.client.repository.moments.SyncableMarkedMomentRepository
         }
+        single<PlaceResolutionCacheStore> { RoomPlaceResolutionCacheStore(get()) }
 
         // Events
         single<EventRepository> { OfflineFirstEventRepository(get(), get(), mediaClaimFence = get()) }

@@ -23,8 +23,10 @@ class GooglePlacesExternalPlacesProvider(
     private val context: Context,
 ) : ExternalPlacesProvider {
     companion object {
-        /** Radius of the circular search area around the given location, in meters. */
-        private const val SEARCH_RADIUS_METERS = 250.0
+        /** Default radius of the circular search area around the given location, in meters. */
+        private const val DEFAULT_SEARCH_RADIUS_METERS = 100.0
+        private const val MIN_SEARCH_RADIUS_METERS = 60.0
+        private const val MAX_SEARCH_RADIUS_METERS = 120.0
 
         /** Maximum number of place results to return per search. */
         private const val MAX_RESULTS = 5
@@ -42,8 +44,15 @@ class GooglePlacesExternalPlacesProvider(
     private val resolvedApiKey: String? = resolveApiKey()
     private val placesClient: PlacesClient? by lazy(::createPlacesClient)
 
-    override suspend fun searchNearbyPlaces(location: Location): List<PlaceSuggestion> {
+    override suspend fun searchNearbyPlaces(location: Location): List<PlaceSuggestion> =
+        searchNearbyPlaces(location, DEFAULT_SEARCH_RADIUS_METERS)
+
+    override suspend fun searchNearbyPlaces(
+        location: Location,
+        radiusMeters: Double,
+    ): List<PlaceSuggestion> {
         val client = placesClient ?: return emptyList()
+        val boundedRadius = radiusMeters.coerceIn(MIN_SEARCH_RADIUS_METERS, MAX_SEARCH_RADIUS_METERS)
 
         return runCatching {
             val request =
@@ -51,7 +60,7 @@ class GooglePlacesExternalPlacesProvider(
                     .builder(
                         CircularBounds.newInstance(
                             LatLng(location.latitude, location.longitude),
-                            SEARCH_RADIUS_METERS,
+                            boundedRadius,
                         ),
                         listOf(
                             Place.Field.DISPLAY_NAME,
@@ -60,6 +69,7 @@ class GooglePlacesExternalPlacesProvider(
                             Place.Field.ID,
                             Place.Field.PRIMARY_TYPE,
                             Place.Field.PRIMARY_TYPE_DISPLAY_NAME,
+                            Place.Field.TYPES,
                         ),
                     ).setMaxResultCount(MAX_RESULTS)
                     .setRankPreference(SearchNearbyRequest.RankPreference.DISTANCE)
@@ -79,6 +89,7 @@ class GooglePlacesExternalPlacesProvider(
                         confidence = (BASE_CONFIDENCE - (index * CONFIDENCE_STEP)).coerceAtLeast(MIN_CONFIDENCE),
                         category = place.primaryTypeDisplayName ?: place.primaryType,
                         externalId = place.id,
+                        types = place.placeTypes.orEmpty(),
                     )
                 }
         }.onFailure { error ->

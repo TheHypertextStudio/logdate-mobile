@@ -3,6 +3,8 @@ package app.logdate.client.domain.location.history
 import app.logdate.client.device.crypto.activityHistoryRecordId
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.client.device.identity.DeviceIdProvider
+import app.logdate.client.domain.places.PlaceResolutionCache
+import app.logdate.client.domain.recommendation.PlaceFamiliarityRepository
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.location.ActivityHistoryRepository
@@ -78,6 +80,8 @@ class LocationHistoryService(
     private val userPlaces: UserPlacesRepository,
     private val activityHistory: ActivityHistoryRepository? = null,
     private val reconstructionDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val placeFamiliarity: PlaceFamiliarityRepository? = null,
+    private val placeResolutionCache: PlaceResolutionCache? = null,
 ) {
     private val json =
         Json {
@@ -155,8 +159,24 @@ class LocationHistoryService(
                             contextEnd,
                         )
 
+                    val allPlaceIds = payloads.filterIsInstance<HistoryPayload.Place>().map { it.value.id }.distinct()
+                    val familiarityCounts =
+                        if (placeFamiliarity == null || allPlaceIds.isEmpty()) {
+                            emptyMap()
+                        } else {
+                            allPlaceIds.associateWith { id -> placeFamiliarity.get(id)?.visitCount ?: 0 }
+                        }
                     val selection = selectDaySources(inferredByDevice, payloads, first, last, effectiveZone, sourceDeviceId, localDevice)
-                    buildSnapshot(selection.items, payloads, memories, selection.devices, selection.preferred, framedStart, framedEnd).copy(
+                    buildSnapshot(
+                        inferred = selection.items,
+                        payloads = payloads,
+                        notes = memories,
+                        devices = selection.devices,
+                        selectedDevice = selection.preferred,
+                        start = framedStart,
+                        end = framedEnd,
+                        familiarityCounts = familiarityCounts,
+                    ).copy(
                         effectiveZoneId = effectiveZone.id,
                         isMultiZoneDay = isMultiZoneDay,
                         failedSections =
@@ -394,9 +414,18 @@ class LocationHistoryService(
         selectedDevice: String,
         start: Instant,
         end: Instant,
+        familiarityCounts: Map<String, Int> = emptyMap(),
     ): LocationHistorySnapshot {
         val edits = payloads.filterIsInstance<HistoryPayload.Correction>().map { it.value }
         val places = applyPlaceLabels(payloads.filterIsInstance<HistoryPayload.Place>().map { it.value }.distinctBy { it.id }, edits)
+        val aliases = resolvePlaceAliases(edits)
+        val placesById = places.associateBy { it.id }
+        val matchCandidates = places.filter { candidate -> aliases[candidate.id] == null || aliases[candidate.id] == candidate.id }
+        val explicitPlaceCorrections =
+            edits
+                .filter { it.field == HistoryField.PLACE && !it.targetEvidenceId.startsWith("place:") }
+                .associate { it.targetEvidenceId to it.value }
+        val matcher = ScoredPlaceMatcher()
         val links = payloads.filterIsInstance<HistoryPayload.MemoryLink>().map { it.value }
         val manual = manualVisits(payloads, places)
         val corrected = ApplyHistoryEdits()(inferred + manual, edits, places)
@@ -404,13 +433,18 @@ class LocationHistoryService(
         val visits =
             AssociateVisitMemories()(
                 dated.filterIsInstance<PlaceVisit>().map { visit ->
-                    visit.copy(
-                        place =
-                            visit.place ?: places
-                                .filter {
-                                    geographicDistance(visit.latitude, visit.longitude, it.latitude, it.longitude) <= 75
-                                }.singleOrNull(),
-                    )
+                    if (visit.place != null) {
+                        visit.copy(needsDisambiguation = false)
+                    } else {
+                        val explicitId = visit.evidenceIds.firstNotNullOfOrNull { explicitPlaceCorrections[it] }
+                        val match = matcher.match(visit, matchCandidates, familiarityCounts, explicitId)
+                        val resolvedAssigned = match.assigned?.let { placesById[aliases[it.id] ?: it.id] ?: it }
+                        visit.copy(
+                            place = resolvedAssigned,
+                            candidatePlaceIds = match.candidatePlaceIds,
+                            needsDisambiguation = match.needsDisambiguation,
+                        )
+                    }
                 },
                 notes,
                 links,
@@ -421,7 +455,6 @@ class LocationHistoryService(
                 (it.creationTimestamp >= start && it.creationTimestamp < end) || it.uid.toString() in linkedNoteIds
             }
         val superseded = edits.flatMap { it.supersedes }.toSet()
-        val aliases = resolvePlaceAliases(edits)
         val displayedPlaces =
             visits.values.mapNotNull { it.place?.id } +
                 datedNotes.mapNotNull {
@@ -482,6 +515,7 @@ class LocationHistoryService(
                 }
         if (previous == null) {
             put(place.id, "place", HistoryPayload.Place(place))
+            placeResolutionCache?.invalidateNear(place.latitude, place.longitude)
             return
         }
         val edits = payloads.filterIsInstance<HistoryPayload.Correction>().map { it.value }
@@ -491,6 +525,7 @@ class LocationHistoryService(
         if (place.userConfirmed && place.name != effective.name) correct("place:${place.id}", HistoryField.LABEL, place.name)
         val retained = if (place.userConfirmed) place.copy(name = previous.name) else place
         put(place.id, "place", HistoryPayload.Place(retained))
+        placeResolutionCache?.invalidateNear(retained.latitude, retained.longitude)
     }
 
     suspend fun correct(
@@ -576,6 +611,7 @@ class LocationHistoryService(
         into: SemanticPlace,
     ) {
         savePlace(into)
+        placeResolutionCache?.invalidateNear(into.latitude, into.longitude)
         if (fromId == into.id) return
         val scope = scope()
         val records = store.records(scope.first, scope.second)

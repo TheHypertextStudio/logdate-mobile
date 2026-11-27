@@ -625,9 +625,14 @@ class LocationHistoryServiceTest {
             fixture.save("sample", HistoryPayload.Observation(observation("sample", start + 1.hours)))
             fixture.save("one", HistoryPayload.Place(place("one")))
             fixture.save("two", HistoryPayload.Place(place("two").copy(latitude = 36.0001)))
-            assertNull((fixture.snapshot().items.single() as PlaceVisit).place)
-            fixture.service.correct("sample", app.logdate.shared.model.location.HistoryField.PLACE, "two")
-            assertEquals("two", (fixture.snapshot().items.single() as PlaceVisit).place?.id)
+            val ambiguous = fixture.snapshot().items.single() as PlaceVisit
+            assertEquals("one", ambiguous.place?.id)
+            assertTrue(ambiguous.needsDisambiguation)
+            assertEquals(listOf("one", "two"), ambiguous.candidatePlaceIds)
+            fixture.service.correct("sample", HistoryField.PLACE, "two")
+            val corrected = fixture.snapshot().items.single() as PlaceVisit
+            assertEquals("two", corrected.place?.id)
+            assertTrue(!corrected.needsDisambiguation)
         }
 
     @Test
