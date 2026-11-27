@@ -5,6 +5,7 @@ import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.VisitMemoryLink
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.minutes
+import kotlin.uuid.Uuid
 
 class AssociateVisitMemories {
     operator fun invoke(
@@ -12,16 +13,20 @@ class AssociateVisitMemories {
         notes: List<JournalNote>,
         links: List<VisitMemoryLink>,
     ): List<PlaceVisit> {
-        val assignments = mutableMapOf<String, MutableList<String>>()
+        val explicitLinksByNoteId =
+            links
+                .mapNotNull { link -> Uuid.parseOrNull(link.noteId)?.let { noteId -> noteId to link.targetEvidenceId } }
+                .groupBy({ it.first }, { it.second })
+        val assignments = mutableMapOf<String, MutableList<Uuid>>()
         notes.forEach { note ->
-            val explicit = links.filter { it.noteId == note.uid.toString() }
+            val explicitTargets = explicitLinksByNoteId[note.uid].orEmpty()
             val chosen =
-                if (explicit.isNotEmpty()) {
-                    visits.filter { visit -> explicit.any { it.targetEvidenceId in visit.evidenceIds } }.singleOrNull()
+                if (explicitTargets.isNotEmpty()) {
+                    visits.filter { visit -> explicitTargets.any { targetId -> targetId in visit.evidenceIds } }.singleOrNull()
                 } else {
                     scoreBestVisit(visits, note)
                 }
-            chosen?.let { visit -> assignments.getOrPut(visit.id) { mutableListOf() }.add(note.uid.toString()) }
+            chosen?.let { visit -> assignments.getOrPut(visit.id) { mutableListOf() }.add(note.uid) }
         }
         return visits.map { it.copy(memoryIds = assignments[it.id].orEmpty()) }
     }
@@ -44,7 +49,10 @@ class AssociateVisitMemories {
                 val insideStrict = note.creationTimestamp >= visit.start && note.creationTimestamp <= visit.end
                 val temporalScore =
                     when {
-                        insideStrict -> 1.0
+                        insideStrict -> {
+                            1.0
+                        }
+
                         note.creationTimestamp >= visit.start - TEMPORAL_GRACE &&
                             note.creationTimestamp <= visit.end + TEMPORAL_GRACE -> {
                             val edgeDelta =
@@ -55,7 +63,10 @@ class AssociateVisitMemories {
                                 }
                             1.0 - (edgeDelta / edgeGraceSeconds).coerceIn(0.0, 1.0)
                         }
-                        else -> return@mapNotNull null
+
+                        else -> {
+                            return@mapNotNull null
+                        }
                     }
                 val spatialScore = 1.0 / (1.0 + dist / 50.0)
                 ScoredVisit(visit, temporalScore + spatialScore, insideStrict)

@@ -50,61 +50,78 @@ internal class HistoryBoundaryReader(
         for ((device, points) in observations.groupBy { it.deviceId }) {
             val validPoints = points.filter { it.validCoordinates() }
             if (validPoints.isEmpty()) continue
-            val earliestObservation = validPoints.minBy { it.timestamp }
-            try {
-                allActivities +=
-                    readPrecedingActivityCarryIn(
-                        owner = owner,
-                        origin = origin,
-                        localDevice = localDevice,
-                        device = device,
-                        before = earliestObservation.timestamp + 1.milliseconds,
-                        deletedActivities = deletedActivities,
-                    )
-            } catch (error: Exception) {
-                if (error is CancellationException) throw error
-                activityFailed = true
-                Napier.w("Preceding activity carry-in is unavailable", error)
-            }
-            var next = applyActivityEvidence(validPoints, allActivities).minWith(compareBy({ it.timestamp }, { it.id }))
-            val continuity = ContinuityTracker(parameters, next)
-            var cursorTime = next.timestamp
-            var cursorId = next.id
-            while (true) {
-                val page = observationPage(owner, origin, localDevice, device, cursorTime, cursorId)
-                if (page.isEmpty()) break
-                val valid = page.filter { it.id !in deletedSamples && it.validCoordinates() }
-                if (valid.isNotEmpty()) {
-                    val from = valid.last().timestamp - 10.minutes
-                    val until = next.timestamp + 1.milliseconds
-                    try {
-                        allActivities += readActivities(owner, origin, device, from, until, deletedActivities)
-                    } catch (error: Exception) {
-                        if (error is CancellationException) throw error
-                        activityFailed = true
-                        Napier.w("Activity evidence before the selected day is unavailable", error)
-                    }
-                    val enriched = applyActivityEvidence(valid + next, allActivities)
-                    next = enriched.last()
-                    var reset = false
-                    for (previous in enriched.dropLast(1)) {
-                        if (continuity.separates(previous, next)) {
-                            reset = true
-                            break
-                        }
-                        prefix += previous
-                        next = previous
-                    }
-                    if (reset) break
+            val earliest = validPoints.minBy { it.timestamp }
+            if (!tryAppendActivities(allActivities) {
+                    readPrecedingActivityCarryIn(owner, origin, localDevice, device, earliest.timestamp + 1.milliseconds, deletedActivities)
                 }
-                val oldest = page.last()
-                cursorTime = oldest.timestamp
-                cursorId = oldest.id
-                if (page.size < PAGE_SIZE) break
+            ) {
+                activityFailed = true
+            }
+            val start = applyActivityEvidence(validPoints, allActivities).minWith(compareBy({ it.timestamp }, { it.id }))
+            if (readDevicePrefix(owner, origin, localDevice, device, start, deletedSamples, deletedActivities, prefix, allActivities)) {
+                activityFailed = true
             }
         }
         return BoundaryEvidence(observations + prefix, allActivities.distinctBy { Triple(it.ownerId, it.deviceId, it.id) }, activityFailed)
     }
+
+    private suspend fun readDevicePrefix(
+        owner: String,
+        origin: String,
+        localDevice: String,
+        device: String,
+        initialNext: LocationObservation,
+        deletedSamples: Set<String>,
+        deletedActivities: Set<String>,
+        prefix: MutableList<LocationObservation>,
+        allActivities: MutableList<ActivityObservation>,
+    ): Boolean {
+        var activityFailed = false
+        var next = initialNext
+        val continuity = ContinuityTracker(parameters, next)
+        var cursorTime = next.timestamp
+        var cursorId = next.id
+        while (true) {
+            val page = observationPage(owner, origin, localDevice, device, cursorTime, cursorId)
+            if (page.isEmpty()) break
+            val valid = page.filter { it.id !in deletedSamples && it.validCoordinates() }
+            if (valid.isNotEmpty()) {
+                val from = valid.last().timestamp - 10.minutes
+                val until = next.timestamp + 1.milliseconds
+                if (!tryAppendActivities(allActivities) { readActivities(owner, origin, device, from, until, deletedActivities) }) {
+                    activityFailed = true
+                }
+                val enriched = applyActivityEvidence(valid + next, allActivities)
+                next = enriched.last()
+                val stopped =
+                    enriched.dropLast(1).any { previous ->
+                        if (continuity.separates(previous, next)) return@any true
+                        prefix += previous
+                        next = previous
+                        false
+                    }
+                if (stopped) break
+            }
+            val oldest = page.last()
+            cursorTime = oldest.timestamp
+            cursorId = oldest.id
+            if (page.size < PAGE_SIZE) break
+        }
+        return activityFailed
+    }
+
+    private suspend inline fun tryAppendActivities(
+        target: MutableList<ActivityObservation>,
+        load: () -> List<ActivityObservation>,
+    ): Boolean =
+        try {
+            target += load()
+            true
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
+            Napier.w("Boundary activity evidence is unavailable", error)
+            false
+        }
 
     private suspend fun observationPage(
         owner: String,

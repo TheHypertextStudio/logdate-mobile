@@ -65,13 +65,15 @@ class ApplyHistoryEdits {
         val explicitPlace = unique[HistoryField.PLACE]?.let { id -> places.firstOrNull { it.id == id } }
         val suggestedPlace = unique[HistoryField.SUGGESTED_PLACE]?.let { id -> places.firstOrNull { it.id == id } }
         return when (item) {
-            is PlaceVisit ->
+            is PlaceVisit -> {
                 item.copy(
                     start = validStart,
                     end = validEnd,
                     place = explicitPlace ?: item.place ?: suggestedPlace,
                 )
-            is JourneyLeg ->
+            }
+
+            is JourneyLeg -> {
                 item.copy(
                     start = validStart,
                     end = validEnd,
@@ -79,7 +81,11 @@ class ApplyHistoryEdits {
                         unique[HistoryField.ACTIVITY]?.let { name -> TravelMode.entries.firstOrNull { it.name == name } } ?: item.mode,
                     userConfirmed = unique[HistoryField.ACTIVITY] != null,
                 )
-            else -> item
+            }
+
+            else -> {
+                item
+            }
         }
     }
 

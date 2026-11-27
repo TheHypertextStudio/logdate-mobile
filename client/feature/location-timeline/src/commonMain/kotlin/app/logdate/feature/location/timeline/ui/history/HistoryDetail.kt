@@ -103,12 +103,12 @@ fun HumanLocationHistoryDetailContent(
             )
             IconButton(onClick = actions.onCloseDetail) { Icon(Icons.Default.Close, stringResource(Res.string.history_close)) }
         }
+        val supporting = item.supportingText?.asString().orEmpty()
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(item.timeLabel.asString(), style = MaterialTheme.typography.labelLarge)
-            val supportingText = item.supportingText.asString()
-            if (supportingText.isNotBlank()) {
+            if (supporting.isNotBlank()) {
                 Text(
-                    supportingText,
+                    supporting,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

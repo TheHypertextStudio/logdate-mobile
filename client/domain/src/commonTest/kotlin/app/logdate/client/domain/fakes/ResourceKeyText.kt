@@ -16,6 +16,7 @@ fun UiText.toResourceKeyString(): String =
         is UiText.Resource -> "${resource.key}(${args.joinToString { it.toResourceKeyArgument() }})"
         is UiText.Plural -> "${resource.key}[$quantity](${args.joinToString { it.toResourceKeyArgument() }})"
         is UiText.Raw -> value
+        is UiText.Joined -> parts.joinToString(separator) { it.toResourceKeyString() }
     }
 
 private fun Any.toResourceKeyArgument(): String = if (this is UiText) toResourceKeyString() else toString()

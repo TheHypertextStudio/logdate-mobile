@@ -61,9 +61,25 @@ class PlaceResolutionCache(
     ): PlaceResolutionResult {
         val key = location.toCacheKey()
         val bypassCachedCommercial = isOvernightResidential || (dwellDuration != null && dwellDuration > 45.minutes)
-        var leader: CompletableDeferred<PlaceResolutionResult>? = null
-        var follower: CompletableDeferred<PlaceResolutionResult>? = null
+        return when (val lookup = lookupOrJoinInFlight(key, bypassCachedCommercial)) {
+            is CacheLookup.Hit -> {
+                lookup.result
+            }
 
+            is CacheLookup.Follower -> {
+                lookup.deferred.await()
+            }
+
+            is CacheLookup.Leader -> {
+                fetchAndCache(key, location, searchRadiusMeters, dwellDuration, isOvernightResidential, lookup.deferred)
+            }
+        }
+    }
+
+    private suspend fun lookupOrJoinInFlight(
+        key: Pair<Int, Int>,
+        bypassCachedCommercial: Boolean,
+    ): CacheLookup =
         mutex.withLock {
             val now = clock.now()
             val memoryHit = cache[key]
@@ -71,29 +87,34 @@ class PlaceResolutionCache(
                 // Re-insert for true access-order LRU eviction.
                 cache.remove(key)
                 cache[key] = memoryHit
-                return memoryHit.result
+                return@withLock CacheLookup.Hit(memoryHit.result)
             }
             if (!bypassCachedCommercial) {
                 val diskHit = readStoreEntry(key, now)
                 if (diskHit != null) {
                     putMemoryLocked(key, diskHit)
-                    return diskHit.result
+                    return@withLock CacheLookup.Hit(diskHit.result)
                 }
             }
             val existingFlight = inFlight[key]
             if (existingFlight != null) {
-                follower = existingFlight
+                CacheLookup.Follower(existingFlight)
             } else {
                 val deferred = CompletableDeferred<PlaceResolutionResult>()
                 inFlight[key] = deferred
-                leader = deferred
+                CacheLookup.Leader(deferred)
             }
         }
 
-        follower?.let { return it.await() }
-
-        val ownedDeferred = checkNotNull(leader)
-        return try {
+    private suspend fun fetchAndCache(
+        key: Pair<Int, Int>,
+        location: Location,
+        searchRadiusMeters: Double,
+        dwellDuration: Duration?,
+        isOvernightResidential: Boolean,
+        ownedDeferred: CompletableDeferred<PlaceResolutionResult>,
+    ): PlaceResolutionResult =
+        try {
             val result =
                 resolveLocationToPlaceUseCase(
                     location = location,
@@ -102,16 +123,10 @@ class PlaceResolutionCache(
                     isOvernightResidential = isOvernightResidential,
                 )
             val resolvedAt = clock.now()
-            val expiresAt =
-                when (result) {
-                    is PlaceResolutionResult.UnknownLocation -> resolvedAt + negativeTtl
-                    else -> resolvedAt + ttl
-                }
+            val expiresAt = if (result is PlaceResolutionResult.UnknownLocation) resolvedAt + negativeTtl else resolvedAt + ttl
             val entry = CacheEntry(result, resolvedAt, expiresAt)
             mutex.withLock {
-                if (result !is PlaceResolutionResult.UserDefinedPlace) {
-                    putMemoryLocked(key, entry)
-                }
+                if (result !is PlaceResolutionResult.UserDefinedPlace) putMemoryLocked(key, entry)
                 if (result is PlaceResolutionResult.ExternalSuggestion || result is PlaceResolutionResult.CoarseLocation) {
                     persistEntry(key, result, resolvedAt, expiresAt)
                 }
@@ -120,12 +135,23 @@ class PlaceResolutionCache(
             ownedDeferred.complete(result)
             result
         } catch (error: Throwable) {
-            mutex.withLock {
-                inFlight.remove(key)
-            }
+            mutex.withLock { inFlight.remove(key) }
             ownedDeferred.completeExceptionally(error)
             throw error
         }
+
+    private sealed interface CacheLookup {
+        data class Hit(
+            val result: PlaceResolutionResult,
+        ) : CacheLookup
+
+        data class Follower(
+            val deferred: CompletableDeferred<PlaceResolutionResult>,
+        ) : CacheLookup
+
+        data class Leader(
+            val deferred: CompletableDeferred<PlaceResolutionResult>,
+        ) : CacheLookup
     }
 
     suspend fun invalidateNear(
@@ -203,6 +229,7 @@ class PlaceResolutionCache(
                         )
                     KIND_EXTERNAL to json.encodeToString(dto)
                 }
+
                 is PlaceResolutionResult.CoarseLocation -> {
                     val dto =
                         CachedCoarseDto(
@@ -217,7 +244,10 @@ class PlaceResolutionCache(
                         )
                     KIND_COARSE to json.encodeToString(dto)
                 }
-                else -> return
+
+                else -> {
+                    return
+                }
             }
         activeStore.upsert(
             CachedPlaceRow(
@@ -249,6 +279,7 @@ class PlaceResolutionCache(
                         ),
                     )
                 }
+
                 KIND_COARSE -> {
                     val dto = json.decodeFromString(CachedCoarseDto.serializer(), row.payloadJson)
                     PlaceResolutionResult.CoarseLocation(
@@ -264,7 +295,10 @@ class PlaceResolutionCache(
                             ),
                     )
                 }
-                else -> null
+
+                else -> {
+                    null
+                }
             }
         }.getOrNull()
 

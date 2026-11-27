@@ -11,4 +11,6 @@ internal expect fun HumanPlacePicker(
     selected: SemanticPlace?,
     onPoint: (Double, Double) -> Unit,
     modifier: Modifier,
+    radiusMeters: Double = selected?.radiusMeters ?: 75.0,
+    fallbackCoordinate: HistoryCoordinate? = null,
 )

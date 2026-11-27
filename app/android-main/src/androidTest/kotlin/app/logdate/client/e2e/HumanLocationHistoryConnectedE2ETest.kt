@@ -81,7 +81,7 @@ class HumanLocationHistoryConnectedE2ETest {
         composeRule.onNodeWithText(memory.content).performScrollTo().performClick()
         composeRule.waitUntil(15_000) {
             viewModel.state.value.items
-                .any { it.title == place.name.toUiText() && it.memories.any { preview -> preview.id == memory.uid.toString() } }
+                .any { it.title == place.name.toUiText() && it.memories.any { preview -> preview.id == memory.uid } }
         }
         runBlocking {
             val retained = notes.getNoteById(memory.uid)

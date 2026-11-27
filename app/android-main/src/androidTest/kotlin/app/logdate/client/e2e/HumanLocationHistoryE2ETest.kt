@@ -16,7 +16,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.logdate.client.text.toUiText
+import app.logdate.client.text.UiText
 import app.logdate.feature.location.timeline.ui.history.HistoryEditAction
 import app.logdate.feature.location.timeline.ui.history.HistoryItemKind
 import app.logdate.feature.location.timeline.ui.history.HistoryItemUi
@@ -34,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.uuid.Uuid
 
 /** Run with smokeDevicesGroupDebugAndroidTest; physical devices are never a target. */
 @RunWith(AndroidJUnit4::class)
@@ -43,7 +44,9 @@ class HumanLocationHistoryE2ETest {
 
     private lateinit var state: MutableState<HumanLocationHistoryState>
     private val edits = mutableListOf<Pair<String?, HistoryEditAction>>()
-    private val openedMemories = mutableListOf<String>()
+    private val openedMemories = mutableListOf<Uuid>()
+    private val morningMemoryId = Uuid.parse("00000000-0000-0000-0000-000000000101")
+    private val returnMemoryId = Uuid.parse("00000000-0000-0000-0000-000000000102")
 
     @Test
     fun `selection stays in the day until details are explicitly opened`() {
@@ -64,7 +67,7 @@ class HumanLocationHistoryE2ETest {
         show(singleVisit())
         composeRule.onNodeWithText("A quiet morning").performClick()
         composeRule.runOnIdle {
-            assertEquals(listOf("memory"), openedMemories)
+            assertEquals(listOf(morningMemoryId), openedMemories)
             assertEquals(null, state.value.selectedItemId)
             assertFalse(state.value.detailVisible)
         }
@@ -76,7 +79,7 @@ class HumanLocationHistoryE2ETest {
         composeRule.onNodeWithContentDescription("See details").performClick()
         composeRule.onNodeWithContentDescription("Close").performScrollTo().performClick()
         composeRule.runOnIdle {
-            state.value = state.value.copy(recoveryMessage = "Location is paused. Your saved day is still here.".toUiText())
+            state.value = state.value.copy(recoveryMessage = UiText.Raw("Location is paused. Your saved day is still here."))
         }
         composeRule.onNodeWithText("Change place").assertDoesNotExist()
         composeRule.onNodeWithText("Location is paused. Your saved day is still here.").assertIsDisplayed()
@@ -117,10 +120,10 @@ class HumanLocationHistoryE2ETest {
                         initial.items.map { item ->
                             if (item.id == "cafe-return") {
                                 item.copy(
-                                    title = "Mothership Coffee again".toUiText(),
+                                    title = UiText.Raw("Mothership Coffee again"),
                                     memories =
                                         listOf(
-                                            HistoryMemoryUi("return-memory", "Back for a second cup".toUiText(), HistoryMemoryKind.Text),
+                                            HistoryMemoryUi(returnMemoryId, UiText.Raw("Back for a second cup"), HistoryMemoryKind.Text),
                                         ),
                                 )
                             } else {
@@ -171,7 +174,7 @@ class HumanLocationHistoryE2ETest {
         composeRule.runOnIdle {
             state.value =
                 state.value.copy(
-                    places = listOf(HistoryPlaceUi("cafe", "Mothership Coffee", listOf("2 visits".toUiText()))),
+                    places = listOf(HistoryPlaceUi("cafe", UiText.Raw("Mothership Coffee"), UiText.Raw("2 visits"))),
                     placesQuery = "library",
                 )
         }
@@ -242,22 +245,38 @@ class HumanLocationHistoryE2ETest {
 
     private fun day() =
         HumanLocationHistoryState(
-            dateLabel = "Tuesday, September 29".toUiText(),
+            dateLabel = UiText.Raw("Tuesday, September 29"),
             items =
                 listOf(
                     HistoryItemUi(
                         "cafe-morning",
                         HistoryItemKind.Visit,
-                        "Mothership Coffee".toUiText(),
-                        "9:00–9:30 AM".toUiText(),
+                        UiText.Raw("Mothership Coffee"),
+                        UiText.Raw("9:00–9:30 AM"),
                         memories =
                             listOf(
-                                HistoryMemoryUi("memory", "A quiet morning".toUiText(), HistoryMemoryKind.Text),
+                                HistoryMemoryUi(morningMemoryId, UiText.Raw("A quiet morning"), HistoryMemoryKind.Text),
                             ),
                     ),
-                    HistoryItemUi("walk", HistoryItemKind.Journey, "Walked".toUiText(), "9:30–9:45 AM".toUiText(), "15 min".toUiText()),
-                    HistoryItemUi("gap", HistoryItemKind.Gap, "Part of your day is missing".toUiText(), "9:45–10:00 AM".toUiText()),
-                    HistoryItemUi("cafe-return", HistoryItemKind.Visit, "Mothership Coffee".toUiText(), "10:00–10:30 AM".toUiText()),
+                    HistoryItemUi(
+                        "walk",
+                        HistoryItemKind.Journey,
+                        UiText.Raw("Walked"),
+                        UiText.Raw("9:30–9:45 AM"),
+                        UiText.Raw("15 min"),
+                    ),
+                    HistoryItemUi(
+                        "gap",
+                        HistoryItemKind.Gap,
+                        UiText.Raw("Part of your day is missing"),
+                        UiText.Raw("9:45–10:00 AM"),
+                    ),
+                    HistoryItemUi(
+                        "cafe-return",
+                        HistoryItemKind.Visit,
+                        UiText.Raw("Mothership Coffee"),
+                        UiText.Raw("10:00–10:30 AM"),
+                    ),
                 ),
         )
 }

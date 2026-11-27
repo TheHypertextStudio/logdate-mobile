@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,6 +33,7 @@ import logdate.client.feature.location.timeline.generated.resources.history_repl
 import logdate.client.feature.location.timeline.generated.resources.history_search
 import logdate.client.feature.location.timeline.generated.resources.history_your_day
 import logdate.client.feature.location.timeline.generated.resources.history_your_places
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -52,12 +54,16 @@ internal fun HumanHistoryWorkspace(
         enabled = state.tab == HistoryTab.Places && supportingDetail == null && !state.detailVisible,
     )
     var replayVisible by rememberSaveable { mutableStateOf(false) }
-    val listState =
-        androidx.compose.foundation.lazy
-            .rememberLazyListState()
-    val placesState =
-        androidx.compose.foundation.lazy
-            .rememberLazyListState()
+    val listState = rememberLazyListState()
+    val placesState = rememberLazyListState()
+    LaunchedEffect(state.selectedItemId, state.selectionRevision, state.tab, supportingDetail, state.detailVisible) {
+        val selectedId = state.selectedItemId ?: return@LaunchedEffect
+        if (state.tab == HistoryTab.Day && supportingDetail == null && !state.detailVisible) {
+            // The list's first item is its header, so the visit at targetIndex sits one row lower.
+            val targetIndex = state.items.indexOfFirst { it.id == selectedId }
+            if (targetIndex >= 0) listState.animateScrollToItem(targetIndex + 1)
+        }
+    }
     PlatformBackHandler(enabled = state.detailVisible) { actions.onCloseDetail() }
     WorkspaceSupportingSheet(
         initialExtent = initialSupportingExtent,
@@ -76,7 +82,7 @@ internal fun HumanHistoryWorkspace(
                 ?: if (state.tab == HistoryTab.Day) {
                     state.dateLabel.asString()
                 } else {
-                    stringResource(Res.string.history_places_count, state.places.size)
+                    pluralStringResource(Res.plurals.history_places_count, state.places.size, state.places.size)
                 },
         modifier = modifier.fillMaxSize(),
         header = {
@@ -97,7 +103,7 @@ internal fun HumanHistoryWorkspace(
             )
         },
         headerActions = toolbarActions,
-        summaryDetail = state.daySummary.asString().takeIf { state.tab == HistoryTab.Day },
+        summaryDetail = state.daySummary?.asString()?.takeIf { state.tab == HistoryTab.Day },
         supportingContextKey = if (supportingDetail != null) "place" else state.selectedItemId.takeIf { state.detailVisible },
         focus = { mapContent(Modifier.fillMaxSize()) },
         supporting = {
@@ -116,7 +122,6 @@ internal fun HumanHistoryWorkspace(
                         actions,
                         placesState,
                         modifier = if (mapAvailable) Modifier else Modifier.widthIn(max = 720.dp).fillMaxWidth(),
-                        mapAvailable = mapAvailable,
                     ) { HistoryRecovery(state, actions) }
                 }
 

@@ -279,104 +279,110 @@ internal suspend fun extractUnifiedPlacesVisited(
         return extractPlacesVisited(entries)
     }
     val aliases = historySnapshot?.placeAliases.orEmpty()
-    val confirmedHistoryVisits =
-        historySnapshot
-            ?.items
-            ?.filterIsInstance<PlaceVisit>()
-            ?.filter { it.confirmedStay && it.place != null }
-            .orEmpty()
+    val chronologicalFromHistory = extractConfirmedHistoryVisits(historySnapshot, aliases)
+    val fromNotes = entries.mapNotNull { note -> resolveNotePlaceVisit(note, historySnapshot, placeResolutionCache, aliases) }
+    return (chronologicalFromHistory + fromNotes)
+        .sortedBy { it.first }
+        .map { it.second }
+        .distinctBy(TimelinePlaceVisit::id)
+}
 
-    val chronologicalFromHistory =
-        confirmedHistoryVisits.mapNotNull { visit ->
+private fun extractConfirmedHistoryVisits(
+    historySnapshot: LocationHistorySnapshot?,
+    aliases: Map<String, String>,
+): List<Pair<Instant, TimelinePlaceVisit>> =
+    historySnapshot
+        ?.items
+        ?.filterIsInstance<PlaceVisit>()
+        ?.filter { it.confirmedStay && it.place != null }
+        .orEmpty()
+        .mapNotNull { visit ->
             val place = visit.place ?: return@mapNotNull null
-            val resolvedId = aliases[place.id] ?: place.id
             visit.start to
                 TimelinePlaceVisit(
-                    id = resolvedId,
+                    id = aliases[place.id] ?: place.id,
                     name = place.name,
                     latitude = visit.latitude,
                     longitude = visit.longitude,
                 )
         }
 
-    val fromNotes =
-        entries.mapNotNull { note ->
-            val location = note.location ?: return@mapNotNull null
-            val latitude = location.effectiveLatitude
-            val longitude = location.effectiveLongitude
-            val explicitPlace = location.place
-            val explicitName = explicitPlace?.name
-            if (explicitPlace != null && explicitName != null) {
-                val id = aliases[explicitPlace.id.toString()] ?: explicitPlace.id.toString()
-                return@mapNotNull note.creationTimestamp to
-                    TimelinePlaceVisit(
-                        id = id,
-                        name = explicitName,
-                        latitude = explicitPlace.latitude,
-                        longitude = explicitPlace.longitude,
-                    )
-            }
-            if (location.displayName != null) {
-                return@mapNotNull location.toTimelinePlaceVisit(allowRawCoordinates = false)?.let {
-                    note.creationTimestamp to it
-                }
-            }
-            if (latitude == null || longitude == null) return@mapNotNull null
-            val matchingVisit =
-                historySnapshot
-                    ?.items
-                    ?.filterIsInstance<PlaceVisit>()
-                    ?.firstOrNull { visit ->
-                        visit.place != null &&
-                            note.creationTimestamp >= visit.start - 5.minutes &&
-                            note.creationTimestamp <= visit.end + 5.minutes &&
-                            geographicDistance(visit.latitude, visit.longitude, latitude, longitude) <=
-                            maxOf(100.0, visit.uncertaintyRadiusMeters.toDouble() + 35.0)
-                    }
-            val matchedPlace = matchingVisit?.place
-            if (matchedPlace != null) {
-                val id = aliases[matchedPlace.id] ?: matchedPlace.id
-                return@mapNotNull note.creationTimestamp to
-                    TimelinePlaceVisit(
-                        id = id,
-                        name = matchedPlace.name,
-                        latitude = matchingVisit.latitude,
-                        longitude = matchingVisit.longitude,
-                    )
-            }
-            val resolved =
-                runCatching {
-                    placeResolutionCache?.resolve(
-                        Location(latitude, longitude, LocationAltitude(0.0, AltitudeUnit.METERS)),
-                    )
-                }.getOrNull()
-            val label =
-                when (resolved) {
-                    is PlaceResolutionResult.UserDefinedPlace -> resolved.place.name
-                    is PlaceResolutionResult.ExternalSuggestion -> resolved.suggestion.name
-                    is PlaceResolutionResult.CoarseLocation -> resolved.address.formatFallbackLabel()
-                    else -> null
-                } ?: return@mapNotNull null
-            val resolvedId =
-                when (resolved) {
-                    is PlaceResolutionResult.UserDefinedPlace -> resolved.place.uid.toString()
-                    is PlaceResolutionResult.ExternalSuggestion ->
-                        resolved.suggestion.externalId ?: "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
-                    else -> "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
-                }
-            note.creationTimestamp to
-                TimelinePlaceVisit(
-                    id = aliases[resolvedId] ?: resolvedId,
-                    name = label,
-                    latitude = latitude,
-                    longitude = longitude,
-                )
+private suspend fun resolveNotePlaceVisit(
+    note: JournalNote,
+    historySnapshot: LocationHistorySnapshot?,
+    placeResolutionCache: PlaceResolutionCache?,
+    aliases: Map<String, String>,
+): Pair<Instant, TimelinePlaceVisit>? {
+    val location = note.location ?: return null
+    val explicitPlace = location.place
+    val explicitName = explicitPlace?.name
+    if (explicitPlace != null && explicitName != null) {
+        return note.creationTimestamp to
+            TimelinePlaceVisit(
+                id = aliases[explicitPlace.id.toString()] ?: explicitPlace.id.toString(),
+                name = explicitName,
+                latitude = explicitPlace.latitude,
+                longitude = explicitPlace.longitude,
+            )
+    }
+    if (location.displayName != null) {
+        return location.toTimelinePlaceVisit(allowRawCoordinates = false)?.let { note.creationTimestamp to it }
+    }
+    val latitude = location.effectiveLatitude ?: return null
+    val longitude = location.effectiveLongitude ?: return null
+    val matchingVisit =
+        historySnapshot?.items?.filterIsInstance<PlaceVisit>()?.firstOrNull { visit ->
+            visit.place != null &&
+                note.creationTimestamp >= visit.start - 5.minutes &&
+                note.creationTimestamp <= visit.end + 5.minutes &&
+                geographicDistance(visit.latitude, visit.longitude, latitude, longitude) <=
+                maxOf(100.0, visit.uncertaintyRadiusMeters.toDouble() + 35.0)
         }
+    matchingVisit?.place?.let { matchedPlace ->
+        return note.creationTimestamp to
+            TimelinePlaceVisit(
+                aliases[matchedPlace.id] ?: matchedPlace.id,
+                matchedPlace.name,
+                matchingVisit.latitude,
+                matchingVisit.longitude,
+            )
+    }
+    val resolved =
+        runCatching {
+            placeResolutionCache?.resolve(Location(latitude, longitude, LocationAltitude(0.0, AltitudeUnit.METERS)))
+        }.getOrNull() ?: return null
+    return buildResolvedNotePlaceVisit(note.creationTimestamp, latitude, longitude, resolved, aliases)
+}
 
-    return (chronologicalFromHistory + fromNotes)
-        .sortedBy { it.first }
-        .map { it.second }
-        .distinctBy(TimelinePlaceVisit::id)
+private fun buildResolvedNotePlaceVisit(
+    timestamp: Instant,
+    latitude: Double,
+    longitude: Double,
+    resolved: PlaceResolutionResult,
+    aliases: Map<String, String>,
+): Pair<Instant, TimelinePlaceVisit>? {
+    val label =
+        when (resolved) {
+            is PlaceResolutionResult.UserDefinedPlace -> resolved.place.name
+            is PlaceResolutionResult.ExternalSuggestion -> resolved.suggestion.name
+            is PlaceResolutionResult.CoarseLocation -> resolved.address.formatFallbackLabel()
+            else -> null
+        } ?: return null
+    val rawId =
+        when (resolved) {
+            is PlaceResolutionResult.UserDefinedPlace -> {
+                resolved.place.uid.toString()
+            }
+
+            is PlaceResolutionResult.ExternalSuggestion -> {
+                resolved.suggestion.externalId ?: "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
+            }
+
+            else -> {
+                "${roundCoordinate(latitude)},${roundCoordinate(longitude)}"
+            }
+        }
+    return timestamp to TimelinePlaceVisit(aliases[rawId] ?: rawId, label, latitude, longitude)
 }
 
 internal fun extractDayParts(entries: List<JournalNote>): List<DayPart> {

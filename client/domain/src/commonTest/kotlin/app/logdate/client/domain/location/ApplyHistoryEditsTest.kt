@@ -13,6 +13,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class ApplyHistoryEditsTest {
     private val start = Instant.parse("2026-09-27T10:00:00Z")
@@ -63,8 +64,10 @@ class ApplyHistoryEditsTest {
 
     @Test
     fun `merge combines two adjacent visits and drops any connecting leg`() {
+        val m1 = Uuid.parse("00000000-0000-0000-0000-000000000001")
+        val m2 = Uuid.parse("00000000-0000-0000-0000-000000000002")
         val cafe = SemanticPlace("cafe", "Cedar Coffee", 36.0, -115.0, userConfirmed = true)
-        val first = PlaceVisit("v1", start, start + 30.minutes, listOf("s1", "s2"), 36.0, -115.0, true, memoryIds = listOf("m1"))
+        val first = PlaceVisit("v1", start, start + 30.minutes, listOf("s1", "s2"), 36.0, -115.0, true, memoryIds = listOf(m1))
         val connector =
             JourneyLeg(
                 id = "j1",
@@ -84,7 +87,7 @@ class ApplyHistoryEditsTest {
                 longitude = -115.0,
                 confirmedStay = true,
                 place = cafe,
-                memoryIds = listOf("m2"),
+                memoryIds = listOf(m2),
             )
         val merge = HistoryCorrection("m", "s1", HistoryField.MERGE_WITH, "s3")
         val result = ApplyHistoryEdits()(listOf(first, connector, second), listOf(merge), listOf(cafe))
@@ -92,13 +95,14 @@ class ApplyHistoryEditsTest {
         assertEquals(start, merged.start)
         assertEquals(start + 1.hours, merged.end)
         assertEquals(listOf("s1", "s2", "s3"), merged.evidenceIds)
-        assertEquals(listOf("m1", "m2"), merged.memoryIds)
+        assertEquals(listOf(m1, m2), merged.memoryIds)
         assertEquals("cafe", merged.place?.id)
     }
 
     @Test
     fun `split divides a visit into two independently editable halves`() {
-        val longVisit = PlaceVisit("v1", start, start + 2.hours, listOf("s1"), 36.0, -115.0, true, memoryIds = listOf("m1"))
+        val m1 = Uuid.parse("00000000-0000-0000-0000-000000000001")
+        val longVisit = PlaceVisit("v1", start, start + 2.hours, listOf("s1"), 36.0, -115.0, true, memoryIds = listOf(m1))
         val splitAt = start + 1.hours
         val split = HistoryCorrection("sp", "s1", HistoryField.SPLIT_AT, splitAt.toString())
         val work = SemanticPlace("work", "Office", 36.0, -115.0, userConfirmed = true)

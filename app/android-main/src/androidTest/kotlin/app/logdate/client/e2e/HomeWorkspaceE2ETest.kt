@@ -75,8 +75,8 @@ class HomeWorkspaceE2ETest {
                     tab = HistoryTab.Places,
                     places =
                         listOf(
-                            HistoryPlaceUi("cafe", "Mothership Coffee", listOf("Visited today".toUiText())),
-                            HistoryPlaceUi("library", "Las Vegas Library", listOf("Visited today".toUiText())),
+                            HistoryPlaceUi("cafe", "Mothership Coffee".toUiText(), "Visited today".toUiText()),
+                            HistoryPlaceUi("library", "Las Vegas Library".toUiText(), "Visited today".toUiText()),
                         ),
                 ),
             )

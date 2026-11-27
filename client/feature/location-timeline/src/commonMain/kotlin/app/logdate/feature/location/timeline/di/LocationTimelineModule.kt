@@ -9,7 +9,7 @@ import org.koin.dsl.module
 val locationTimelineFeatureModule: Module =
     module {
         single { SuggestNearbyHistoryPlacesUseCase(get()) }
-        viewModel { HumanLocationHistoryViewModel(get(), get(), get(), get(), get()) }
+        viewModel { HumanLocationHistoryViewModel(get(), get(), get(), get(), get(), getOrNull()) }
     }
 
 @Deprecated(

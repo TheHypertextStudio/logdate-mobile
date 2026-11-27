@@ -26,6 +26,7 @@ import app.logdate.ui.workspace.SupportingExtent
 import app.logdate.ui.workspace.WorkspaceDestination
 import app.logdate.ui.workspace.WorkspaceScaffold
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 @androidx.compose.runtime.Composable
 internal fun PlacesSheetFixture(
@@ -41,11 +42,11 @@ internal fun PlacesSheetFixture(
         listOf(
             HistoryPlaceUi(
                 "cafe",
-                "Riverside Café",
-                listOf(UiText.Raw("London · 3 visits")),
+                UiText.Raw("Riverside Café"),
+                UiText.Raw("London · 3 visits"),
                 listOf(
                     HistoryMemoryUi(
-                        "coffee",
+                        Uuid.parse("00000000-0000-4000-8000-00000000c0ff"),
                         UiText.Raw("Coffee before the train, and time to finish our conversation."),
                         HistoryMemoryKind.Text,
                     ),
@@ -53,11 +54,17 @@ internal fun PlacesSheetFixture(
             ),
             HistoryPlaceUi(
                 "river",
-                "River walk",
-                listOf(UiText.Raw("London · 2 visits")),
-                listOf(HistoryMemoryUi("walk", UiText.Raw("The long walk home along the river."), HistoryMemoryKind.Text)),
+                UiText.Raw("River walk"),
+                UiText.Raw("London · 2 visits"),
+                listOf(
+                    HistoryMemoryUi(
+                        Uuid.parse("00000000-0000-4000-8000-00000000a1c0"),
+                        UiText.Raw("The long walk home along the river."),
+                        HistoryMemoryKind.Text,
+                    ),
+                ),
             ),
-        ) + (1..12).map { HistoryPlaceUi("place-$it", "Synthetic place $it", listOf(UiText.Raw("Example visit"))) }
+        ) + (1..12).map { HistoryPlaceUi("place-$it", UiText.Raw("Synthetic place $it"), UiText.Raw("Example visit")) }
     LogDateTheme(dynamicColor = false, darkTheme = false) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {

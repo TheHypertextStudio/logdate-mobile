@@ -42,13 +42,43 @@ class HumanLocationHistoryStateTest {
             day.copy(
                 places =
                     listOf(
-                        HistoryPlaceUi("cafe", "Mothership Coffee", listOf("2 visits".toUiText())),
-                        HistoryPlaceUi("library", "West Charleston Library", listOf("1 visit".toUiText())),
+                        HistoryPlaceUi("cafe", "Mothership Coffee".toUiText(), "2 visits".toUiText()),
+                        HistoryPlaceUi("library", "West Charleston Library".toUiText(), "1 visit".toUiText()),
                     ),
                 placesQuery = "  COFFEE ",
             )
         assertEquals(listOf("cafe"), state.filteredPlaces().map { it.id })
         assertEquals(2, state.copy(placesQuery = " ").filteredPlaces().size)
         assertEquals(emptyList(), state.copy(placesQuery = "unknown").filteredPlaces())
+    }
+
+    @Test
+    fun `place sorting and category filtering order results as requested`() {
+        val state =
+            day.copy(
+                places =
+                    listOf(
+                        HistoryPlaceUi(
+                            "cafe",
+                            "Cedar Cafe".toUiText(),
+                            "4 visits".toUiText(),
+                            category = "COFFEE",
+                            visitCount = 4,
+                            latestTimestampMs = 100L,
+                        ),
+                        HistoryPlaceUi(
+                            "park",
+                            "Amber Park".toUiText(),
+                            "1 visit".toUiText(),
+                            category = "OUTDOORS",
+                            visitCount = 1,
+                            latestTimestampMs = 200L,
+                        ),
+                    ),
+            )
+        assertEquals(listOf("park", "cafe"), state.copy(placesSort = PlacesSortOption.Recent).filteredPlaces().map { it.id })
+        assertEquals(listOf("cafe", "park"), state.copy(placesSort = PlacesSortOption.MostVisited).filteredPlaces().map { it.id })
+        assertEquals(listOf("park", "cafe"), state.copy(placesSort = PlacesSortOption.Alphabetical).filteredPlaces().map { it.id })
+        assertEquals(listOf("cafe"), state.copy(placesCategoryFilter = "COFFEE").filteredPlaces().map { it.id })
     }
 }

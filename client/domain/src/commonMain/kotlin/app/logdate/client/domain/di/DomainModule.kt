@@ -193,7 +193,9 @@ val domainModule: Module =
             app.logdate.client.domain.moments.markedEntrySaveUseCase(
                 get(),
                 get(),
-                get<app.logdate.client.domain.location.history.LocationHistoryService>()::linkMemory,
+                get<app.logdate.client.domain.location.history.LocationHistoryService>().let { history ->
+                    { evidenceId: String, noteId: String -> history.linkMemory(evidenceId, kotlin.uuid.Uuid.parse(noteId)) }
+                },
                 get(),
             )
         }

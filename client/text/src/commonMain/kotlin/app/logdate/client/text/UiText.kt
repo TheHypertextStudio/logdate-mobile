@@ -18,7 +18,8 @@ import org.jetbrains.compose.resources.stringResource
  *
  * [Raw] holds text that is already final: a server message, a device name, or the person's own content.
  * An argument can itself be a [UiText], for example a device name inside a sentence. It is resolved
- * before the sentence is formatted.
+ * before the sentence is formatted. [Joined] lists several texts, such as a place's locality and when it
+ * was last visited, and leaves out any part that resolves to blank.
  */
 sealed interface UiText {
     data class Resource(
@@ -34,6 +35,11 @@ sealed interface UiText {
 
     data class Raw(
         val value: String,
+    ) : UiText
+
+    data class Joined(
+        val parts: List<UiText>,
+        val separator: String,
     ) : UiText
 }
 
@@ -64,6 +70,10 @@ fun UiText.asString(): String =
         is UiText.Raw -> {
             value
         }
+
+        is UiText.Joined -> {
+            parts.map { it.asString() }.filter { it.isNotBlank() }.joinToString(separator)
+        }
     }
 
 suspend fun UiText.resolve(): String =
@@ -82,6 +92,10 @@ suspend fun UiText.resolve(): String =
 
         is UiText.Raw -> {
             value
+        }
+
+        is UiText.Joined -> {
+            parts.map { it.resolve() }.filter { it.isNotBlank() }.joinToString(separator)
         }
     }
 
