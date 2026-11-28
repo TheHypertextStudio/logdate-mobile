@@ -33,7 +33,9 @@ kotlin {
         }
 
         jvmTest.dependencies {
-            implementation(projects.integration.atprotoOauthFixtures)
+            // The server container build (gradle/server-docker.settings.gradle.kts) leaves out
+            // test-only projects, so the fixtures are optional.
+            project.findProject(":integration:atproto-oauth-fixtures")?.let { implementation(it) }
             implementation(libs.kotlin.test.junit)
             implementation(libs.nimbus.jose.jwt)
         }
