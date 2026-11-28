@@ -92,8 +92,11 @@ dependencies {
     implementation(libs.koin.logger.slf4j)
 
     // Testing
-    testImplementation(projects.client.networking)
-    testImplementation(projects.integration.atprotoOauthFixtures)
+    // The container build (gradle/server-docker.settings.gradle.kts) includes only the modules the
+    // server ships with and leaves out the server tests, so these test-only projects are optional.
+    listOf(":client:networking", ":integration:atproto-oauth-fixtures").forEach { path ->
+        findProject(path)?.let { testImplementation(it) }
+    }
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.ktor.client.websockets)

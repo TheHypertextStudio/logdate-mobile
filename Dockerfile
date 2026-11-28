@@ -2,7 +2,9 @@
 # Optimized for both local development and Google Cloud Run production deployment
 
 # Build stage
-FROM mirror.gcr.io/library/gradle:8.10.2-jdk17@sha256:c2900027f3f0681c2cbfb09d527813851ad67aeafbb409997297efa2df20e748 AS build
+# The server builds and runs on Java 21. The OpenAPI schema generator (schema-kenerator 2.7)
+# calls List.removeFirst(), which Java 17 lacks, so the server fails at startup on Java 17.
+FROM mirror.gcr.io/library/gradle:8.10.2-jdk21@sha256:963d59f7f22767da4efbcf46b661361b61af5fb88b0309da1071c4234c647eba AS build
 
 WORKDIR /workspace
 ENV GRADLE_USER_HOME=/home/gradle/.gradle
@@ -30,7 +32,7 @@ RUN --mount=type=cache,target=/home/gradle/.gradle \
     ./gradlew :server:shadowJar :server:validateOpenApi -x test --no-daemon --build-cache
 
 # Development stage (for docker-compose)
-FROM eclipse-temurin:17-jre-jammy AS development
+FROM eclipse-temurin:21-jre-jammy AS development
 
 WORKDIR /app
 
@@ -56,7 +58,7 @@ EXPOSE 8080
 CMD ["java", "-jar", "logdate-server.jar"]
 
 # Production stage (for Cloud Run)
-FROM gcr.io/distroless/java17-debian12:nonroot AS production
+FROM gcr.io/distroless/java21-debian12:nonroot AS production
 
 WORKDIR /app
 
