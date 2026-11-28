@@ -109,6 +109,7 @@ import app.logdate.client.domain.timeline.GetTimelinePageUseCase
 import app.logdate.client.domain.timeline.GroupNotesByDayBoundsUseCase
 import app.logdate.client.domain.timeline.InferMomentsUseCase
 import app.logdate.client.domain.timeline.SummarizeJournalEntriesUseCase
+import app.logdate.client.domain.timeline.TimelineDayHistory
 import app.logdate.client.domain.watch.DefaultWatchPreferencesRepository
 import app.logdate.client.domain.watch.StampedPreferenceStore
 import app.logdate.client.domain.watch.WatchPreferencesRepository
@@ -261,7 +262,8 @@ val domainModule: Module =
         }
         factory { GetTimelinePageUseCase(get(), get(), get(), get<GetTimelineDayUseCase>()) }
         factory { InferMomentsUseCase(get(), get()) }
-        factory { GetTimelineDayUseCase(get(), get(), get(), get(), getOrNull(), getOrNull()) }
+        single { TimelineDayHistory(getOrNull<app.logdate.client.domain.location.history.LocationHistoryService>()) }
+        factory { GetTimelineDayUseCase(get(), get(), get(), get(), getOrNull(), getOrNull(), get()) }
         factory { SummarizeJournalEntriesUseCase(get()) }
 
         // Include health domain module

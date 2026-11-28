@@ -16,7 +16,6 @@ import app.logdate.shared.model.Location
 import app.logdate.shared.model.LocationAltitude
 import app.logdate.shared.model.Person
 import app.logdate.shared.model.location.PlaceVisit
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -183,8 +182,9 @@ class GetTimelineDayUseCase(
     private val getMediaUrisUseCase: GetMediaUrisUseCase,
     private val extractPeopleUseCase: ExtractPeopleUseCase,
     private val inferMomentsUseCase: InferMomentsUseCase,
-    private val locationHistoryService: LocationHistoryService? = null,
+    locationHistoryService: LocationHistoryService? = null,
     private val placeResolutionCache: PlaceResolutionCache? = null,
+    private val dayHistory: TimelineDayHistory = TimelineDayHistory(locationHistoryService),
 ) : TimelineDayBuilder {
     /**
      * Creates a TimelineDay from journal entries for a specific date.
@@ -230,7 +230,7 @@ class GetTimelineDayUseCase(
         // Keep the media lookup warm for downstream screens even though the list cards rely on raw notes.
         getMediaUrisUseCase(date)
 
-        val historySnapshot = runCatching { locationHistoryService?.observeDay(date)?.first() }.getOrNull()
+        val historySnapshot = dayHistory.snapshotFor(date)
         val placesVisited = extractUnifiedPlacesVisited(entries, historySnapshot, placeResolutionCache)
         val moments = inferMomentsUseCase(date, entries, placesVisited)
 
