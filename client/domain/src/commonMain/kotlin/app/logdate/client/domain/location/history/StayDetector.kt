@@ -22,9 +22,34 @@ internal fun dynamicCoreRadius(
     parameters: HistoryReconstructionParameters,
 ): Double {
     val accuracies = anchors.mapNotNull { it.accuracyMeters }.sorted()
-    val medianAcc = accuracies.getOrNull(accuracies.size / 2)?.toDouble() ?: return parameters.stayRadiusMeters
+    return coreRadiusForMedianAccuracy(accuracies.getOrNull(accuracies.size / 2), parameters)
+}
+
+/** The core stay radius for anchors whose median reported accuracy is [medianAccuracy]. */
+internal fun coreRadiusForMedianAccuracy(
+    medianAccuracy: Float?,
+    parameters: HistoryReconstructionParameters,
+): Double {
+    val medianAcc = medianAccuracy?.toDouble() ?: return parameters.stayRadiusMeters
     val lower = minOf(parameters.minimumCoreStayRadiusMeters, parameters.stayRadiusMeters)
     return (lower + 0.75 * maxOf(0.0, medianAcc - 15.0)).coerceIn(lower, parameters.stayRadiusMeters)
+}
+
+/**
+ * The reported accuracies of a growing stay's anchors, kept in order so the median that sets its
+ * radius costs one insertion per sample instead of a copy and sort of every anchor so far.
+ */
+internal class SortedAccuracies {
+    private val values = ArrayList<Float>()
+
+    fun add(accuracy: Float?) {
+        if (accuracy == null) return
+        val found = values.binarySearch(accuracy)
+        values.add(if (found >= 0) found else -(found + 1), accuracy)
+    }
+
+    /** The same element [dynamicCoreRadius] picks: index size / 2 of the sorted accuracies. */
+    fun median(): Float? = values.getOrNull(values.size / 2)
 }
 
 /**
@@ -83,8 +108,17 @@ internal class StayDetector(
     internal fun effectiveRadius(
         anchors: List<LocationObservation>,
         center: Pair<Double, Double>,
+    ): Double = radiusAround(dynamicCoreRadius(anchors, parameters), center)
+
+    private fun effectiveRadius(
+        anchorAccuracies: SortedAccuracies,
+        center: Pair<Double, Double>,
+    ): Double = radiusAround(coreRadiusForMedianAccuracy(anchorAccuracies.median(), parameters), center)
+
+    private fun radiusAround(
+        core: Double,
+        center: Pair<Double, Double>,
     ): Double {
-        val core = dynamicCoreRadius(anchors, parameters)
         val envelope = matchingEnvelope(center) ?: return core
         return maxOf(core, minOf(envelope.radiusMeters, parameters.maximumSavedPlaceRadiusMeters))
     }
@@ -103,25 +137,26 @@ internal class StayDetector(
         start: Int,
     ): DetectedStay? {
         val anchors = mutableListOf(start)
+        val anchorAccuracies = SortedAccuracies().apply { add(points[start].accuracyMeters) }
         val center = CenterAccumulator().apply { add(points[start]) }
         val seedEnvelope = matchingEnvelope(center.value)
         // Fixed once the stay first lasts long enough, so a centre that creeps with a slow drift
         // ends the stay instead of following the drift until the whole stretch is rejected.
         var settled: Pair<Double, Double>? = null
         val fits = { sample: LocationObservation ->
-            val currentAnchors = anchors.map(points::get)
             val currentCenter = center.value
-            val currentRadius = effectiveRadius(currentAnchors, currentCenter)
+            val currentRadius = effectiveRadius(anchorAccuracies, currentCenter)
             val envelope = matchingEnvelope(currentCenter) ?: seedEnvelope
             belongs(currentCenter, sample, currentRadius, envelope) &&
                 settled?.let { settledCenter ->
-                    belongs(settledCenter, sample, effectiveRadius(currentAnchors, settledCenter), envelope)
+                    belongs(settledCenter, sample, effectiveRadius(anchorAccuracies, settledCenter), envelope)
                 } != false
         }
         var index = start + 1
         while (index < points.size) {
             if (fits(points[index])) {
                 anchors += index
+                anchorAccuracies.add(points[index].accuracyMeters)
                 center.add(points[index])
                 if (settled == null && points[index].timestamp - points[start].timestamp >= parameters.minimumQuickStay) {
                     settled = center.value
@@ -129,7 +164,7 @@ internal class StayDetector(
                 index++
                 continue
             }
-            val currentRadius = effectiveRadius(anchors.map(points::get), center.value)
+            val currentRadius = effectiveRadius(anchorAccuracies, center.value)
             val maxNeighborhood = maxOf(parameters.neighborhoodMeters, currentRadius * 1.5)
             index = returnAfterDrift(points, center.value, index, maxNeighborhood, fits) ?: break
         }
